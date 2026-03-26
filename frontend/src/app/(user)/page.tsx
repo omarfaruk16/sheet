@@ -9,6 +9,13 @@ import { onAuthStateChanged } from 'firebase/auth';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
+const getImageUrl = (url?: string) => {
+  if (!url) return 'https://images.unsplash.com/photo-1544716278-e513176f20b5?w=300&q=80';
+  if (url.startsWith('http') || url.startsWith('data:')) return url;
+  const base = API_URL.replace('/api', '');
+  return `${base}${url}`;
+};
+
 export default function HomePage() {
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -68,50 +75,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-white pb-20">
-
-      {/* Header */}
-      <div className="px-6 pt-12 pb-4 flex justify-between items-center bg-white sticky top-0 z-10 border-b border-gray-50 shadow-sm">
-        
-        <div className="flex items-center">
-          <Link href="/" className="font-black text-xl tracking-tighter text-green-600 flex items-center gap-1">
-            <BookOpen className="w-6 h-6 mr-1" />
-            OrbitSheet
-          </Link>
-        </div>
-
-        {/* Right: Profile or Sign In */}
-        <div className="flex items-center gap-3">
-          {currentUser ? (
-            <Link href="/profile" className="flex items-center gap-2 hover:opacity-80 transition-opacity p-1.5 border border-gray-100 rounded-full shadow-sm pr-3 bg-gray-50 cursor-pointer">
-              {currentUser?.photoURL ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={currentUser.photoURL}
-                  alt={getUserName()}
-                  className="w-8 h-8 rounded-full object-cover border border-green-200"
-                  referrerPolicy="no-referrer"
-                  onError={e => {
-                    (e.currentTarget as HTMLImageElement).style.display = 'none';
-                  }}
-                />
-              ) : (
-                <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold bg-green-100 text-green-700 text-xs">
-                  {getUserInitials()}
-                </div>
-              )}
-              <div className="text-left max-w-[80px]">
-                <h2 className="text-xs font-bold text-gray-900 leading-tight truncate">
-                  {getUserName()}
-                </h2>
-              </div>
-            </Link>
-          ) : (
-            <Link href="/login" className="bg-green-600 text-white px-5 py-2.5 rounded-full text-xs font-bold hover:bg-green-700 transition-colors shadow-md">
-              Sign In
-            </Link>
-          )}
-        </div>
-      </div>
 
       {/* Search Bar */}
       <div className="px-6 pt-5 mb-6">
@@ -221,7 +184,7 @@ export default function HomePage() {
                     {prod.coverImage ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={prod.coverImage}
+                        src={getImageUrl(prod.coverImage)}
                         alt={prod.title}
                         className="w-full h-full object-cover"
                         onError={e => {

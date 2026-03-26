@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Layers, ShoppingCart, User, BookOpen } from 'lucide-react';
@@ -7,6 +8,24 @@ import { cn } from './BottomNav';
 
 export default function HeaderMenu() {
   const pathname = usePathname();
+  const [cartCount, setCartCount] = useState(0);
+
+  useEffect(() => {
+    const updateCount = () => {
+      try {
+        const cart = JSON.parse(localStorage.getItem('leafsheets_cart') || '[]');
+        setCartCount(cart.length);
+      } catch (e) {
+        setCartCount(0);
+      }
+    };
+    
+    updateCount();
+    
+    // Poll for changes across tabs or in-page actions
+    const interval = setInterval(updateCount, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Hide on admin routes
   if (pathname.startsWith('/admin')) return null;
@@ -46,6 +65,11 @@ export default function HeaderMenu() {
         <div className="flex items-center gap-6">
           <Link href="/cart" className="relative text-gray-600 hover:text-green-600 transition-colors">
             <ShoppingCart className="w-5 h-5" />
+            {cartCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                {cartCount}
+              </span>
+            )}
           </Link>
           <Link href="/profile" className="flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-green-600 transition-colors">
             <User className="w-5 h-5" />

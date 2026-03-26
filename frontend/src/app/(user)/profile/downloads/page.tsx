@@ -7,6 +7,13 @@ import { ArrowLeft, Search, DownloadCloud, Lock, CheckCircle2 } from 'lucide-rea
 import axios from 'axios';
 import { auth } from '@/lib/firebase';
 
+const getImageUrl = (url?: string) => {
+  if (!url) return 'https://images.unsplash.com/photo-1544716278-e513176f20b5?w=400&q=80';
+  if (url.startsWith('http') || url.startsWith('data:')) return url;
+  const base = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace('/api', '');
+  return `${base}${url}`;
+};
+
 export default function DownloadsLibrary() {
   const [search, setSearch] = useState('');
   const [library, setLibrary] = useState<any[]>([]);
@@ -113,7 +120,7 @@ export default function DownloadsLibrary() {
                 >
                   <div className="p-4 flex gap-4">
                     <div className="w-20 h-28 shrink-0 rounded-2xl overflow-hidden relative border border-gray-50">
-                      <Image src={item.cover} alt="cover" fill className="object-cover" />
+                      <Image src={getImageUrl(item.cover)} alt="cover" fill className="object-cover" />
                       {item.status === 'generating' && (
                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[1px]">
                           <Lock className="w-6 h-6 text-white opacity-70" />

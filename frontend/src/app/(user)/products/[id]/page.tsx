@@ -8,22 +8,42 @@ import { ArrowLeft, Star, Heart, Check, ArrowRight, ExternalLink } from 'lucide-
 import toast from 'react-hot-toast';
 import axios from 'axios';
 
+const getImageUrl = (url?: string) => {
+  if (!url) return 'https://images.unsplash.com/photo-1544716278-e513176f20b5?w=400&q=80';
+  if (url.startsWith('http') || url.startsWith('data:')) return url;
+  const base = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace('/api', '');
+  return `${base}${url}`;
+};
+
 export default function ProductDetailsPage() {
   const router = useRouter();
   const params = useParams();
   const productId = params.id as string;
   const [product, setProduct] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('chapters');
-  const [selectedChapters, setSelectedChapters] = useState<string[]>(['all']);
+  const [selectedChapters, setSelectedChapters] = useState<string[]>([]);
+  const [isAllSelected, setIsAllSelected] = useState(true);
   
   // Customization State
   const [showCustomization, setShowCustomization] = useState(false);
   const [customInfo, setCustomInfo] = useState({
-    headerLeft: '',
-    headerRight: '',
-    watermark: '',
+    headerName: '',
+    headerEmail: '',
+    watermarkText: '',
     coverText: '',
   });
+
+  // Load saved preferences
+  useEffect(() => {
+    const saved = localStorage.getItem('leafsheets_customPrefs');
+    if (saved) {
+      try {
+        setCustomInfo(JSON.parse(saved));
+      } catch (e) {
+        // ignore JSON parse errors
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const fetchProd = async () => {
@@ -36,31 +56,35 @@ export default function ProductDetailsPage() {
       }
     };
     fetchProd();
-  }, [params.id]);
+  }, [params.id, productId]);
 
-  const isAllSelected = selectedChapters.includes('all');
+  // Initialize selected chapters once product loads
+  useEffect(() => {
+    if (product && product.chapters) {
+      setSelectedChapters(product.chapters.map((c: any) => c._id));
+      setIsAllSelected(true);
+    }
+  }, [product]);
 
   const toggleChapter = (id: string) => {
     if (id === 'all') {
-      // Toggle All Chapters bundle on/off
       if (isAllSelected) {
-        // Deselect All — show individual chapters with none selected yet
+        setIsAllSelected(false);
         setSelectedChapters([]);
       } else {
-        // Select All — hide individual chapters
-        setSelectedChapters(['all']);
+        setIsAllSelected(true);
+        setSelectedChapters(product?.chapters.map((c: any) => c._id) || []);
       }
     } else {
       let newSelected;
-      if (isAllSelected) {
-        newSelected = [id]; // Switch from All to this individual chapter
+      const isSelected = selectedChapters.includes(id);
+      if (isSelected) {
+        newSelected = selectedChapters.filter(c => c !== id);
       } else {
-        newSelected = selectedChapters.includes(id)
-          ? selectedChapters.filter(c => c !== id)
-          : [...selectedChapters, id];
+        newSelected = [...selectedChapters, id];
       }
-      // Don't allow 0 selections — if everything unchecked, re-select All
-      setSelectedChapters(newSelected.length === 0 ? ['all'] : newSelected);
+      setSelectedChapters(newSelected);
+      setIsAllSelected(newSelected.length === (product?.chapters?.length || 0));
     }
   };
 
@@ -115,7 +139,16 @@ export default function ProductDetailsPage() {
       chapters: resolvedChapters,   // Full objects, not just IDs
       isAllChapters: isAllSelected,
       customization: customInfo,
+      // Keeping legacy keys just in case other parts of checkout expect them, mapping to new ones
+      headerLeftText: customInfo.headerName,
+      headerRightText: customInfo.headerEmail,
+      watermarkText: customInfo.watermarkText,
+      coverPageText: customInfo.coverText,
     };
+    
+    // Save to local storage for next time
+    localStorage.setItem('leafsheets_customPrefs', JSON.stringify(customInfo));
+    
     const existing = JSON.parse(localStorage.getItem('leafsheets_cart') || '[]');
     localStorage.setItem('leafsheets_cart', JSON.stringify([...existing, cartItem]));
     toast.success('Added to Cart!');
@@ -154,7 +187,7 @@ export default function ProductDetailsPage() {
         {/* Product Info Main */}
         <div className="flex gap-5">
           <div className="relative w-32 h-44 shrink-0 rounded-2xl overflow-hidden shadow-md">
-            <Image src={product.coverImage || 'https://images.unsplash.com/photo-1544716278-e513176f20b5?w=400&q=80'} alt={product.title} fill className="object-cover" />
+            <Image src={getImageUrl(product.coverImage)} alt={product.title} fill className="object-cover" />
           </div>
           <div className="flex flex-col py-1 flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2 flex-wrap">
@@ -218,19 +251,19 @@ export default function ProductDetailsPage() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5 p-3 bg-green-50/50 border border-green-100 rounded-2xl">
-                  <label className="text-[10px] font-bold text-green-600 uppercase">Header Name</label>
-                  <input type="text" placeholder="e.g. Your Name" value={customInfo.headerLeft} onChange={e => setCustomInfo({...customInfo, headerLeft: e.target.value})} className="w-full bg-white px-3 py-2 rounded-xl text-sm outline-none focus:ring-1 focus:ring-green-400 border border-transparent" />
+                  <label className="text-[10px] font-bold text-green-600 uppercase">Header Name (Max 15)</label>
+                  <input type="text" maxLength={15} placeholder="e.g. Your Name" value={customInfo.headerName} onChange={e => setCustomInfo({...customInfo, headerName: e.target.value})} className="w-full bg-white px-3 py-2 rounded-xl text-sm outline-none focus:ring-1 focus:ring-green-400 border border-transparent" />
                 </div>
                 <div className="space-y-1.5 p-3 bg-green-50/50 border border-green-100 rounded-2xl">
-                  <label className="text-[10px] font-bold text-green-600 uppercase">Header Info</label>
-                  <input type="text" placeholder="e.g. Phone/School" value={customInfo.headerRight} onChange={e => setCustomInfo({...customInfo, headerRight: e.target.value})} className="w-full bg-white px-3 py-2 rounded-xl text-sm outline-none focus:ring-1 focus:ring-green-400 border border-transparent" />
+                  <label className="text-[10px] font-bold text-green-600 uppercase">Header Email / Info</label>
+                  <input type="text" maxLength={30} placeholder="e.g. you@email.com" value={customInfo.headerEmail} onChange={e => setCustomInfo({...customInfo, headerEmail: e.target.value})} className="w-full bg-white px-3 py-2 rounded-xl text-sm outline-none focus:ring-1 focus:ring-green-400 border border-transparent" />
                 </div>
               </div>
 
               <div className="space-y-1.5 p-3 bg-orange-50/50 border border-orange-100 border-dashed rounded-2xl">
                 <label className="text-[10px] font-bold text-orange-600 uppercase">Unique Watermark Text</label>
                 <div className="flex gap-3 items-center">
-                  <input type="text" placeholder="e.g. For Personal Use" value={customInfo.watermark} onChange={e => setCustomInfo({...customInfo, watermark: e.target.value})} className="flex-1 bg-white px-3 py-2 rounded-xl text-sm outline-none focus:ring-1 focus:ring-orange-400 border border-transparent text-center font-mono opacity-50" />
+                  <input type="text" placeholder="e.g. For Personal Use" value={customInfo.watermarkText} onChange={e => setCustomInfo({...customInfo, watermarkText: e.target.value})} className="flex-1 bg-white px-3 py-2 rounded-xl text-sm outline-none focus:ring-1 focus:ring-orange-400 border border-transparent text-center font-mono opacity-50" />
                 </div>
               </div>
 

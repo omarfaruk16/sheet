@@ -1,4 +1,4 @@
-import { PDFDocument, rgb, degrees } from 'pdf-lib';
+import { PDFDocument, rgb, degrees, StandardFonts } from 'pdf-lib';
 import { prisma } from '../config/prisma';
 import fs from 'fs';
 import path from 'path';
@@ -38,96 +38,146 @@ export const generateCustomPdf = async (orderId: string) => {
 
     // Process each item
     for (const item of order.items as any) {
-      const pdfDocs = [];
       
       for (const chapter of item.chapters) {
         try {
-          // Note: In local testing, chapter.pdfUrl might be a dummy string.
-          // We'll create a blank PDF if we can't fetch it.
           let doc;
-          try {
-            if (chapter.pdfUrl && chapter.pdfUrl.startsWith('http')) {
-              const response = await axios.get(chapter.pdfUrl, { responseType: 'arraybuffer' });
-              doc = await PDFDocument.load(response.data);
-            } else if (chapter.pdfUrl && chapter.pdfUrl.startsWith('/uploads')) {
-              // Read physically uploaded local PDFs directly from the file system
-              const localPath = path.join(process.cwd(), chapter.pdfUrl);
-              const fileData = fs.readFileSync(localPath);
-              doc = await PDFDocument.load(fileData);
-            } else {
-              throw new Error('No valid URL');
-            }
-          } catch(e) {
-            console.error(`Mocking PDF due to fetch/file error for ${chapter.pdfUrl}:`, e);
-            // Mock empty PDF for testing
+          if (chapter.pdfUrl && chapter.pdfUrl.startsWith('http')) {
+            const response = await axios.get(chapter.pdfUrl, { responseType: 'arraybuffer' });
+            doc = await PDFDocument.load(response.data);
+          } else if (chapter.pdfUrl && chapter.pdfUrl.startsWith('/uploads')) {
+            const localPath = path.join(process.cwd(), chapter.pdfUrl);
+            const fileData = fs.readFileSync(localPath);
+            doc = await PDFDocument.load(fileData);
+          } else {
+            console.warn(`Mocking missing PDF for chapter ${chapter.name}`);
             doc = await PDFDocument.create();
-            doc.addPage([595.28, 841.89]); // A4
+            doc.addPage([595.28, 841.89]);
             doc.getPages()[0].drawText(`Mock Content for ${chapter.name}`, { x: 50, y: 700, size: 24 });
           }
-          pdfDocs.push(doc);
-        } catch (error) {
-          console.error(`Error processing chapter ${chapter.name}:`, error);
-        }
-      }
 
-      if (pdfDocs.length === 0) continue;
+          const boldFont = await doc.embedFont(StandardFonts.HelveticaBold);
+          const regularFont = await doc.embedFont(StandardFonts.Helvetica);
+          const pages = doc.getPages();
+          
+          for (let i = 0; i < pages.length; i++) {
+            const page = pages[i];
+            const { width, height } = page.getSize();
+            
+            // --- Task 1: Front Page Modification ---
+            if (i === 0) {
+              const boxWidth = 400;
+              const boxHeight = 100;
+              const boxX = width / 2 - boxWidth / 2;
+              const boxY = 30; // 30pt from bottom
+              
+              page.drawRectangle({
+                x: boxX - 10, y: boxY - 10, width: boxWidth + 20, height: boxHeight + 20,
+                color: rgb(1, 1, 1)
+              });
+              
+              page.drawRectangle({
+                x: boxX, y: boxY, width: boxWidth, height: boxHeight,
+                borderColor: rgb(0, 0, 0),
+                borderWidth: 1.5,
+                color: rgb(1, 1, 1)
+              });
+              
+              const nameToPrint = item.headerLeftText || 'Customer Name';
+              const emailToPrint = item.headerRightText || 'Customer Email';
+              const specialMsg = item.coverPageText || "Prepared specifically for:";
+              
+              const lines = specialMsg.split('\n');
+              let currY = boxY + boxHeight - 30;
+              for (const line of lines) {
+                 page.drawText(line, { x: boxX + 20, y: currY, size: 14, font: boldFont, color: rgb(0,0,0) });
+                 currY -= 16;
+              }
+              
+              page.drawText(nameToPrint, { x: boxX + 20, y: boxY + boxHeight - 60, size: 16, font: regularFont, color: rgb(0,0,0) });
+              page.drawText(emailToPrint, { x: boxX + 20, y: boxY + boxHeight - 80, size: 12, font: regularFont, color: rgb(0.2,0.2,0.2) });
+            }
 
-      // Merge
-      const mergedPdf = await PDFDocument.create();
-      for (const doc of pdfDocs) {
-        const copiedPages = await mergedPdf.copyPages(doc, doc.getPageIndices());
-        copiedPages.forEach((page) => mergedPdf.addPage(page));
-      }
+            // --- Task 2: Header on EVERY page ---
+            const hdrHeight = 28;
+            const hdrY = height - hdrHeight;
+            
+            page.drawRectangle({
+              x: 0, y: height - 35, width: width, height: 35,
+              color: rgb(1, 1, 1)
+            });
+            
+            page.drawRectangle({
+              x: 0, y: hdrY, width: width, height: hdrHeight,
+              color: rgb(242/255, 242/255, 242/255)
+            });
+            
+            page.drawLine({
+              start: { x: 0, y: hdrY },
+              end: { x: width, y: hdrY },
+              thickness: 0.5,
+              color: rgb(0, 0, 0)
+            });
+            
+            const headerNameStr = item.headerLeftText || 'Customer Name';
+            const headerEmailStr = item.headerRightText || 'customer@email.com';
+            const textY = hdrY + (hdrHeight - 9) / 2;
+            
+            page.drawText(headerNameStr, { x: 8, y: textY, size: 9, font: boldFont, color: rgb(30/255, 30/255, 30/255) });
+            
+            try {
+              const emailWidth = regularFont.widthOfTextAtSize(headerEmailStr, 9);
+              page.drawText(headerEmailStr, { x: width - emailWidth - 8, y: textY, size: 9, font: regularFont, color: rgb(30/255, 30/255, 30/255) });
+            } catch(e) {
+              page.drawText(headerEmailStr, { x: width - 150, y: textY, size: 9, font: regularFont, color: rgb(30/255, 30/255, 30/255) });
+            }
 
-      // Add Cover Page
-      if (item.coverPageText) {
-        const coverPage = mergedPdf.insertPage(0);
-        const { width, height } = coverPage.getSize();
-        coverPage.drawText(item.coverPageText, {
-          x: 50,
-          y: height - 100,
-          size: 24,
-          color: rgb(0, 0, 0),
-        });
-      }
+            // --- Task 3: Diagonal Watermark ---
+            if (item.watermarkText) {
+              const watermarkStr = item.watermarkText;
+              try {
+                const wmWidth = boldFont.widthOfTextAtSize(watermarkStr, 52);
+                page.drawText(watermarkStr, {
+                  x: width / 2 - wmWidth / 2, y: height / 2, size: 52, font: boldFont, color: rgb(0, 0, 0), opacity: 0.03, rotate: degrees(45)
+                });
+              } catch(e) {
+                page.drawText(watermarkStr, {
+                  x: width / 4, y: height / 2, size: 52, font: boldFont, color: rgb(0, 0, 0), opacity: 0.03, rotate: degrees(45)
+                });
+              }
+            }
+          }
 
-      // Add Header & Watermark
-      const pages = mergedPdf.getPages();
-      for (const page of pages) {
-        const { width, height } = page.getSize();
-        if (item.headerLeftText) page.drawText(item.headerLeftText, { x: 50, y: height - 30, size: 10, color: rgb(0.5, 0.5, 0.5) });
-        if (item.headerRightText) page.drawText(item.headerRightText, { x: width - 100, y: height - 30, size: 10, color: rgb(0.5, 0.5, 0.5) });
-        if (item.watermarkText) {
-          page.drawText(item.watermarkText, {
-            x: width / 2 - 100,
-            y: height / 2,
-            size: 40,
-            color: rgb(0.9, 0.9, 0.9),
-            rotate: degrees(45),
-            opacity: 0.3
+          // Save locally
+          const pdfBytes = await doc.save();
+          
+          // Fix object identification
+          const pid = item.product?.id || item.productId?.id || item.productId || 'UNKNOWN';
+          const safeName = chapter.name.replace(/[^a-zA-Z0-9]/g, '_');
+          const fileName = `${pid}_${safeName}_${Date.now()}.pdf`;
+          const filePath = path.join(downloadsDir, fileName);
+          
+          fs.writeFileSync(filePath, pdfBytes);
+          console.log(`Successfully generated individual chapter PDF at ${filePath}`);
+          
+          const targetUrl = `/downloads/${order.userId}/${fileName}`;
+          
+          // Update the specific OrderChapter with the new customized URL
+          await prisma.orderChapter.update({
+            where: { id: chapter.id },
+            data: { pdfUrl: targetUrl }
           });
+          
+          // Also set the entire item's download URL as fallback if needed
+          await prisma.orderItem.update({
+            where: { id: item.id },
+            data: { downloadUrl: targetUrl }
+          });
+
+        } catch (error) {
+          console.error(`Error customizing chapter ${chapter.name}:`, error);
         }
       }
-
-      // Save locally
-      const pdfBytes = await mergedPdf.save();
-      const productIdStr = item.productId && (item.productId as any)._id 
-        ? (item.productId as any)._id.toString() 
-        : item.productId.toString();
-      const fileName = `${productIdStr}_${Date.now()}.pdf`;
-      const filePath = path.join(downloadsDir, fileName);
-      
-      fs.writeFileSync(filePath, pdfBytes);
-      console.log(`Successfully generated and saved PDF at ${filePath}`);
-      
-      // We store the url on the order item directly via atomic update
-      const targetUrl = `/downloads/${order.userId}/${fileName}`;
-      item.downloadUrl = targetUrl; // update locally for reference if needed
-      
-      await prisma.orderItem.update({
-        where: { id: item.id },
-        data: { downloadUrl: targetUrl }
-      });
     }
     
     console.log(`Finished PDF generation for order ${orderId}`);

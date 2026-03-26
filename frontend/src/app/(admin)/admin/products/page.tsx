@@ -33,8 +33,8 @@ export default function AdminProducts() {
         await adminAxios.delete(`/products/${id}`);
         toast.success('Product deleted');
         fetchProducts();
-      } catch (error) {
-        toast.error('Failed to delete product');
+      } catch (error: any) {
+        toast.error(error.response?.data?.message || 'Failed to delete product');
       }
     }
   };
@@ -94,7 +94,7 @@ export default function AdminProducts() {
               </tr>
             ) : (
               filteredProducts.map((p: any) => (
-                <tr key={p._id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                <tr key={p.id || p._id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="font-medium text-gray-900">{p.title}</div>
                   </td>
@@ -106,11 +106,11 @@ export default function AdminProducts() {
                   <td className="px-6 py-4 font-medium text-green-700">৳{Number(p.regularPrice).toFixed(2)}</td>
                   <td className="px-6 py-4 text-gray-500">{p.chapters?.length || 0}</td>
                   <td className="px-6 py-4 text-right space-x-2">
-                    <Link href={`/admin/products/edit/${p._id}`} className="text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-colors inline-block">
+                    <Link href={`/admin/products/edit/${p.id || p._id}`} className="text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-colors inline-block">
                       <Edit2 className="w-4 h-4" />
                     </Link>
                     <button
-                      onClick={() => handleDelete(p._id, p.title)}
+                      onClick={() => handleDelete(p.id || p._id, p.title)}
                       className="text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />

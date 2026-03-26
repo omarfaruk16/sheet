@@ -19,7 +19,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const { data } = await adminAxios.get('/dashboard-stats');
+        const { data } = await adminAxios.get('/admin/dashboard-stats');
         setStats({
           totalUsers: data.totalUsers,
           totalOrders: data.totalOrders,
@@ -72,7 +72,7 @@ export default function AdminDashboard() {
             <h3 className="text-lg font-bold">Revenue Trends</h3>
             <TrendingUp className="text-green-500" />
           </div>
-          <div className="h-80">
+          <div className="h-80 w-full min-w-0">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
@@ -93,7 +93,7 @@ export default function AdminDashboard() {
             <h3 className="text-lg font-bold">Sales Volume</h3>
             <ShoppingCart className="text-blue-500" />
           </div>
-          <div className="h-80">
+          <div className="h-80 w-full min-w-0">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />

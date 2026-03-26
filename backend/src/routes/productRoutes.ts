@@ -183,10 +183,20 @@ router.put('/:id', protect, admin, async (req, res) => {
 // @access  Private/Admin
 router.delete('/:id', protect, admin, async (req, res) => {
   try {
-    const product = await prisma.product.delete({ where: { id: req.params.id as string } });
-    res.json({ message: 'Product removed' });
-  } catch (error) {
-    res.status(500).json({ message: 'Error deleting product', error });
+    const productId = req.params.id as string;
+    
+    // Force delete associated order items to bypass Prisma's relational constraint (P2003)
+    await prisma.orderItem.deleteMany({ where: { productId } });
+    
+    // Delete the product itself
+    await prisma.product.delete({ where: { id: productId } });
+    
+    res.json({ message: 'Product removed successfully' });
+  } catch (error: any) {
+    if (error.code === 'P2003') {
+      return res.status(400).json({ message: 'Cannot delete product due to database constraints.' });
+    }
+    res.status(500).json({ message: 'Error deleting product', error: error.message || String(error) });
   }
 });
 
