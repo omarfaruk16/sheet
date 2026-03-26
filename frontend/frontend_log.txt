@@ -1,0 +1,182 @@
+
+> frontend@0.1.0 dev
+> next dev
+
+Γû▓ Next.js 16.2.0 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.219:3000
+- Environments: .env.local
+Γ£ô Ready in 1165ms
+
+ GET /admin/orders 200 in 1771ms (next.js: 463ms, application-code: 1308ms)
+ GET /checkout 200 in 1812ms (next.js: 763ms, application-code: 1049ms)
+ GET /cart 200 in 1688ms (next.js: 1297ms, application-code: 391ms)
+Γ¿» The requested resource isn't a valid image for https://sl.bing.net/kAc3sfTFuRo received null
+ GET /checkout 200 in 157ms (next.js: 28ms, application-code: 129ms)
+[browser] AxiosError: Request failed with status code 400
+    at settle (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_0q_5en3._.js:24808:16)
+    at XMLHttpRequest.onloadend (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_0q_5en3._.js:25324:174)
+    at Axios.request (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_0q_5en3._.js:26130:49)
+    at async handlePlaceOrder (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/_0~x-nli._.js:98:13) (file://E:/Final Project (Full-stack)
+Γ£ô Compiled in 8.1s
+Γ£ô Compiled in 1049ms
+ GET /products 200 in 2.1s (next.js: 1465ms, application-code: 609ms)
+ GET /products/69bbb2129dc4cf9810a4d66a 200 in 1606ms (next.js: 1369ms, application-code: 237ms)
+Γ¿» The requested resource isn't a valid image for https://sl.bing.net/kAc3sfTFuRo received null
+ GET /checkout 200 in 294ms (next.js: 229ms, application-code: 65ms)
+ GET /profile 200 in 200ms (next.js: 122ms, application-code: 78ms)
+ GET /admin/orders 200 in 248ms (next.js: 38ms, application-code: 210ms)
+ GET /products 200 in 79ms (next.js: 12ms, application-code: 66ms)
+ GET /profile 200 in 68ms (next.js: 14ms, application-code: 53ms)
+ GET /profile/downloads 200 in 217ms (next.js: 140ms, application-code: 77ms)
+[browser] Image with src "https://images.unsplash.com/photo-1544716278-e513176f20b5?w=400&q=80" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes (file://E:/Final Project (Full-stack)
+ GET /admin/products 200 in 1792ms (next.js: 1307ms, application-code: 485ms)
+ GET /admin/products/new 200 in 597ms (next.js: 308ms, application-code: 288ms)
+ GET /admin/products/edit/cmn6upssb0001eedjr6ddfqdq 200 in 1497ms (next.js: 1405ms, application-code: 92ms)
+ GET /admin/products 200 in 182ms (next.js: 51ms, application-code: 131ms)
+ GET / 200 in 278ms (next.js: 189ms, application-code: 89ms)
+ GET /products/cmn6upssb0001eedjr6ddfqdq 200 in 177ms (next.js: 56ms, application-code: 121ms)
+[browser] Uncaught Error: Invalid src prop (http://localhost:5000/uploads/IMG-892437D9.png) on `next/image`, hostname "localhost" is not configured under images in your `next.config.js`
+See more info: https://nextjs.org/docs/messages/next-image-unconfigured-host
+    at defaultLoader (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_0lgmgah._.js:2809:49)
+    at <unknown> (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_0lgmgah._.js:233:39)
+    at Array.map (<anonymous>)
+    at generateImgAttrs (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_0lgmgah._.js:233:24)
+    at getImgProps (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_0lgmgah._.js:646:27)
+    at <unknown> (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_0lgmgah._.js:3170:82)
+    at Object.react_stack_bottom_frame (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateForwardRef (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:5908:21)
+    at beginWork (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6766:24)
+    at runWithFiberInDEV (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performWorkOnRootViaSchedulerTask (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10255:9)
+    at MessagePort.performWorkUntilDeadline (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:2647:64)
+    at ProductDetailsPage (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/src_app_(user)_products_%5Bid%5D_page_tsx_0qg78-s._.js:237:245)
+    at ClientPageRoot (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_0tt2wve._.js:4461:50)
+ΓÜá Fast Refresh had to perform a full reload due to a runtime error.
+Γ£ô Compiled in 2.9s
+ΓÜá Fast Refresh had to perform a full reload due to a runtime error.
+ GET /admin/products 200 in 1542ms (next.js: 1363ms, application-code: 179ms)
+ GET /admin/products 200 in 81ms (next.js: 7ms, application-code: 74ms)
+ GET /products/cmn6upssb0001eedjr6ddfqdq 200 in 1637ms (next.js: 565ms, application-code: 1072ms)
+[browser] Uncaught Error: Invalid src prop (http://localhost:5000/uploads/IMG-892437D9.png) on `next/image`, hostname "localhost" is not configured under images in your `next.config.js`
+See more info: https://nextjs.org/docs/messages/next-image-unconfigured-host
+    at defaultLoader (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_0jv9h5d._.js:2809:49)
+    at <unknown> (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_0jv9h5d._.js:233:39)
+    at Array.map (<anonymous>)
+    at generateImgAttrs (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_0jv9h5d._.js:233:24)
+    at getImgProps (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_0jv9h5d._.js:646:27)
+    at <unknown> (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_0jv9h5d._.js:3170:82)
+    at Object.react_stack_bottom_frame (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateForwardRef (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:5908:21)
+    at beginWork (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6766:24)
+    at runWithFiberInDEV (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performWorkOnRootViaSchedulerTask (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10255:9)
+    at MessagePort.performWorkUntilDeadline (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:2647:64)
+    at ProductDetailsPage (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/src_app_(user)_products_%5Bid%5D_page_tsx_0qg78-s._.js:237:245)
+    at ClientPageRoot (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_0tt2wve._.js:4461:50)
+Γ£ô Compiled in 2.5s
+ΓÜá Fast Refresh had to perform a full reload due to a runtime error.
+ GET /admin/products 200 in 1897ms (next.js: 438ms, application-code: 1459ms)
+ GET /admin/products 200 in 120ms (next.js: 16ms, application-code: 104ms)
+ GET /products/cmn6upssb0001eedjr6ddfqdq 200 in 1887ms (next.js: 868ms, application-code: 1018ms)
+[browser] Uncaught Error: Invalid src prop (http://localhost:5000/uploads/IMG-892437D9.png) on `next/image`, hostname "localhost" is not configured under images in your `next.config.js`
+See more info: https://nextjs.org/docs/messages/next-image-unconfigured-host
+    at defaultLoader (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_0jv9h5d._.js:2809:49)
+    at <unknown> (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_0jv9h5d._.js:233:39)
+    at Array.map (<anonymous>)
+    at generateImgAttrs (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_0jv9h5d._.js:233:24)
+    at getImgProps (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_0jv9h5d._.js:646:27)
+    at <unknown> (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_0jv9h5d._.js:3170:82)
+    at Object.react_stack_bottom_frame (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateForwardRef (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:5908:21)
+    at beginWork (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6766:24)
+    at runWithFiberInDEV (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performWorkOnRootViaSchedulerTask (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10255:9)
+    at MessagePort.performWorkUntilDeadline (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:2647:64)
+    at ProductDetailsPage (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/src_app_(user)_products_%5Bid%5D_page_tsx_0qg78-s._.js:237:245)
+    at ClientPageRoot (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_0tt2wve._.js:4461:50)
+ GET / 200 in 315ms (next.js: 170ms, application-code: 146ms)
+ GET /admin/products 200 in 291ms (next.js: 14ms, application-code: 277ms)
+ GET /admin/products/edit/cmn6upssb0001eedjr6ddfqdq 200 in 518ms (next.js: 348ms, application-code: 171ms)
+ GET /admin/products 200 in 89ms (next.js: 10ms, application-code: 79ms)
+ GET / 200 in 189ms (next.js: 10ms, application-code: 179ms)
+ GET /products/cmn6upssb0001eedjr6ddfqdq 200 in 118ms (next.js: 34ms, application-code: 83ms)
+[browser] Uncaught Error: Invalid src prop (http://localhost:5000/uploads/IMG-892437D9.png) on `next/image`, hostname "localhost" is not configured under images in your `next.config.js`
+See more info: https://nextjs.org/docs/messages/next-image-unconfigured-host
+    at defaultLoader (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_0jv9h5d._.js:2809:49)
+    at <unknown> (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_0jv9h5d._.js:233:39)
+    at Array.map (<anonymous>)
+    at generateImgAttrs (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_0jv9h5d._.js:233:24)
+    at getImgProps (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_0jv9h5d._.js:646:27)
+    at <unknown> (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_0jv9h5d._.js:3170:82)
+    at Object.react_stack_bottom_frame (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateForwardRef (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:5908:21)
+    at beginWork (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6766:24)
+    at runWithFiberInDEV (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performWorkOnRootViaSchedulerTask (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10255:9)
+    at MessagePort.performWorkUntilDeadline (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:2647:64)
+    at ProductDetailsPage (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/src_app_(user)_products_%5Bid%5D_page_tsx_0qg78-s._.js:237:245)
+    at ClientPageRoot (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_0tt2wve._.js:4461:50)
+ GET /products/cmn6upssb0001eedjr6ddfqdq? 200 in 188ms (next.js: 28ms, application-code: 160ms)
+[browser] Uncaught Error: Invalid src prop (http://localhost:5000/uploads/IMG-892437D9.png) on `next/image`, hostname "localhost" is not configured under images in your `next.config.js`
+See more info: https://nextjs.org/docs/messages/next-image-unconfigured-host
+    at defaultLoader (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_0jv9h5d._.js:2809:49)
+    at <unknown> (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_0jv9h5d._.js:233:39)
+    at Array.map (<anonymous>)
+    at generateImgAttrs (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_0jv9h5d._.js:233:24)
+    at getImgProps (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_0jv9h5d._.js:646:27)
+    at <unknown> (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_0jv9h5d._.js:3170:82)
+    at Object.react_stack_bottom_frame (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateForwardRef (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:5908:21)
+    at beginWork (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6766:24)
+    at runWithFiberInDEV (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performWorkOnRootViaSchedulerTask (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10255:9)
+    at MessagePort.performWorkUntilDeadline (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:2647:64)
+    at ProductDetailsPage (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/src_app_(user)_products_%5Bid%5D_page_tsx_0qg78-s._.js:237:245)
+    at ClientPageRoot (file://E:/Final Project (Full-stack)/Sheet/frontend/.next/dev/static/chunks/node_modules_next_dist_0tt2wve._.js:4461:50)
+ΓÜá Found a change in next.config.mjs. Restarting the server to apply the changes...
+Γû▓ Next.js 16.2.0 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.219:3000
+- Environments: .env.local
+Γ£ô Ready in 1291ms
+
+Γùï Compiling /admin/products ...
+ GET /admin/products 200 in 9.7s (next.js: 7.5s, application-code: 2.1s)
+ GET /products/cmn6upssb0001eedjr6ddfqdq 200 in 14.0s (next.js: 13.3s, application-code: 649ms)
+Γ¿» upstream image http://localhost:5000/uploads/IMG-892437D9.png resolved to private ip ["::1","127.0.0.1"]
+ GET /checkout 200 in 769ms (next.js: 572ms, application-code: 197ms)
+ GET /profile 200 in 249ms (next.js: 177ms, application-code: 72ms)
+ GET /profile/downloads 200 in 216ms (next.js: 139ms, application-code: 77ms)
+[browser] Image with src "https://images.unsplash.com/photo-1544716278-e513176f20b5?w=400&q=80" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes (file://E:/Final Project (Full-stack)
+ GET /admin/orders 200 in 214ms (next.js: 136ms, application-code: 78ms)
+Γ£ô Compiled in 1429ms
+ GET /profile/downloads 200 in 2.1s (next.js: 969ms, application-code: 1137ms)
+Γ¿» upstream image http://localhost:5000/uploads/IMG-892437D9.png resolved to private ip ["::1","127.0.0.1"]
+Γ¿» The requested resource isn't a valid image for https://sl.bing.net/kAc3sfTFuRo received null
+ GET /products/undefined 200 in 365ms (next.js: 107ms, application-code: 258ms)

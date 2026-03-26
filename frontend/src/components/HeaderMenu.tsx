@@ -1,0 +1,58 @@
+'use client';
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Home, Layers, ShoppingCart, User, BookOpen } from 'lucide-react';
+import { cn } from './BottomNav';
+
+export default function HeaderMenu() {
+  const pathname = usePathname();
+
+  // Hide on admin routes
+  if (pathname.startsWith('/admin')) return null;
+
+  const navItems = [
+    { name: 'Home', href: '/', icon: Home },
+    { name: 'Discover', href: '/products', icon: Layers },
+  ];
+
+  return (
+    <header className="hidden md:block sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
+      <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+        <Link href="/" className="font-bold text-2xl tracking-tighter text-green-600 flex items-center gap-2">
+          <BookOpen className="w-6 h-6" />
+          <span>OrbitSheet</span>
+        </Link>
+        
+        <nav className="flex items-center gap-8">
+          {navItems.map((item) => {
+            const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+            return (
+              <Link 
+                key={item.href} 
+                href={item.href}
+                className={cn(
+                  "text-sm font-semibold transition-colors hover:text-green-600 flex items-center gap-2",
+                  isActive ? "text-green-600" : "text-gray-600"
+                )}
+              >
+                <item.icon className="w-4 h-4" />
+                {item.name}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="flex items-center gap-6">
+          <Link href="/cart" className="relative text-gray-600 hover:text-green-600 transition-colors">
+            <ShoppingCart className="w-5 h-5" />
+          </Link>
+          <Link href="/profile" className="flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-green-600 transition-colors">
+            <User className="w-5 h-5" />
+            Profile
+          </Link>
+        </div>
+      </div>
+    </header>
+  );
+}
