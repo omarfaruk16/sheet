@@ -44,8 +44,8 @@ export default function CheckoutPage() {
   }, []);
 
   const subtotal = items.reduce((sum, item) => sum + item.price, 0);
-  const serviceFee = parseFloat((subtotal * 0.05).toFixed(2));
-  const total = parseFloat((subtotal + serviceFee).toFixed(2));
+  const serviceFee = 0;
+  const total = subtotal;
 
   const handlePlaceOrder = async () => {
     if (!senderNumber.trim()) return toast.error('Please enter the Sender Number to confirm payment.');
@@ -125,7 +125,7 @@ export default function CheckoutPage() {
           <p className="text-green-100 text-[11px] font-bold uppercase tracking-wider mb-1">Amount to Pay</p>
           <h2 className="text-4xl font-black">৳{total.toFixed(2)}</h2>
           <p className="text-green-200 text-xs mt-1">
-            {items.length} item(s) · Service fee: ৳{serviceFee.toFixed(2)}
+            {items.length} item(s)
           </p>
         </div>
 

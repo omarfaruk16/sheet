@@ -1,0 +1,27 @@
+.next/types/validator.ts(42,39): error TS2307: Cannot find module '../../src/app/page.js' or its corresponding type declarations.
+src/app/(admin)/admin/page.tsx(49,91): error TS2304: Cannot find name 'DollarSign'.
+src/app/(admin)/admin/page.tsx(50,84): error TS2304: Cannot find name 'ShoppingCart'.
+src/app/(admin)/admin/page.tsx(51,87): error TS2304: Cannot find name 'Users'.
+src/app/(admin)/admin/page.tsx(52,89): error TS2304: Cannot find name 'Repeat'.
+src/app/(admin)/admin/page.tsx(71,14): error TS2304: Cannot find name 'TrendingUp'.
+src/app/(admin)/admin/page.tsx(74,14): error TS2304: Cannot find name 'ResponsiveContainer'.
+src/app/(admin)/admin/page.tsx(75,16): error TS2304: Cannot find name 'LineChart'.
+src/app/(admin)/admin/page.tsx(76,18): error TS2304: Cannot find name 'CartesianGrid'.
+src/app/(admin)/admin/page.tsx(77,18): error TS2304: Cannot find name 'XAxis'.
+src/app/(admin)/admin/page.tsx(78,18): error TS2304: Cannot find name 'YAxis'.
+src/app/(admin)/admin/page.tsx(79,18): error TS2304: Cannot find name 'Tooltip'.
+src/app/(admin)/admin/page.tsx(82,18): error TS2304: Cannot find name 'Line'.
+src/app/(admin)/admin/page.tsx(83,17): error TS2304: Cannot find name 'LineChart'.
+src/app/(admin)/admin/page.tsx(84,15): error TS2304: Cannot find name 'ResponsiveContainer'.
+src/app/(admin)/admin/page.tsx(92,14): error TS2304: Cannot find name 'ShoppingCart'.
+src/app/(admin)/admin/page.tsx(95,14): error TS2304: Cannot find name 'ResponsiveContainer'.
+src/app/(admin)/admin/page.tsx(96,16): error TS2304: Cannot find name 'BarChart'.
+src/app/(admin)/admin/page.tsx(97,18): error TS2304: Cannot find name 'CartesianGrid'.
+src/app/(admin)/admin/page.tsx(98,18): error TS2304: Cannot find name 'XAxis'.
+src/app/(admin)/admin/page.tsx(99,18): error TS2304: Cannot find name 'YAxis'.
+src/app/(admin)/admin/page.tsx(100,18): error TS2304: Cannot find name 'Tooltip'.
+src/app/(admin)/admin/page.tsx(104,18): error TS2304: Cannot find name 'Bar'.
+src/app/(admin)/admin/page.tsx(105,17): error TS2304: Cannot find name 'BarChart'.
+src/app/(admin)/admin/page.tsx(106,15): error TS2304: Cannot find name 'ResponsiveContainer'.
+src/app/(admin)/admin/products/edit/[id]/page.tsx(548,40): error TS2304: Cannot find name 'fileInputRefs'.
+src/app/(admin)/admin/products/edit/[id]/page.tsx(573,44): error TS2304: Cannot find name 'fileInputRefs'.

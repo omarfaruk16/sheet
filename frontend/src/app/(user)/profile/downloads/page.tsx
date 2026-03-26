@@ -10,6 +10,19 @@ import { auth } from '@/lib/firebase';
 export default function DownloadsLibrary() {
   const [search, setSearch] = useState('');
   const [library, setLibrary] = useState<any[]>([]);
+  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
+
+  const toggleExpand = (id: string, e: React.MouseEvent) => {
+    // prevent accordion toggle if clicking the download button
+    if ((e.target as HTMLElement).closest('a')) return;
+    setExpandedItems(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const getPdfUrl = (url: string) => {
+    if (!url) return '#';
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    return `${(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace('/api', '')}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
@@ -28,13 +41,14 @@ export default function DownloadsLibrary() {
             res.data.forEach((order: any) => {
               order.items.forEach((item: any) => {
                 items.push({
-                  id: item._id,
+                  id: item.id || item._id, // Prisma returns id, fallback to _id
                   title: item.productTitle || 'Generated PDF',
-                  type: item.chapters.includes('all') ? 'Full Book' : 'Selected Chapters',
+                  type: item.isAllChapters ? 'Full Book' : 'Selected Chapters',
                   cover: item.productId?.coverImage || 'https://images.unsplash.com/photo-1544716278-e513176f20b5?w=400&q=80',
                   status: order.status,
                   date: new Date(order.createdAt).toLocaleDateString(),
-                  url: item.downloadUrl ? `${(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace('/api', '')}${item.downloadUrl}` : null
+                  url: item.downloadUrl ? `${(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace('/api', '')}${item.downloadUrl}` : null,
+                  chapters: item.chapters || []
                 });
               });
             });
@@ -89,38 +103,84 @@ export default function DownloadsLibrary() {
               <p className="text-gray-500">No sheets found in your library.</p>
             </div>
           ) : (
-            filtered.map((item) => (
-              <div key={item.id} className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 flex gap-4">
-                <div className="w-20 h-28 shrink-0 rounded-2xl overflow-hidden relative border border-gray-50">
-                  <Image src={item.cover} alt="cover" fill className="object-cover" />
-                  {item.status === 'generating' && (
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[1px]">
-                      <Lock className="w-6 h-6 text-white opacity-70" />
+            filtered.map((item) => {
+              const isExpanded = expandedItems[item.id];
+              return (
+                <div 
+                  key={item.id} 
+                  onClick={(e) => toggleExpand(item.id, e)}
+                  className={`bg-white rounded-3xl shadow-sm border flex flex-col transition-all cursor-pointer hover:border-green-200 overflow-hidden ${isExpanded ? 'border-green-300 ring-2 ring-green-50' : 'border-gray-100'}`}
+                >
+                  <div className="p-4 flex gap-4">
+                    <div className="w-20 h-28 shrink-0 rounded-2xl overflow-hidden relative border border-gray-50">
+                      <Image src={item.cover} alt="cover" fill className="object-cover" />
+                      {item.status === 'generating' && (
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[1px]">
+                          <Lock className="w-6 h-6 text-white opacity-70" />
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex flex-col py-1 w-full relative">
+                      <h3 className="font-bold text-gray-900 text-sm mb-1 leading-tight pr-6">{item.title}</h3>
+                      <p className="text-[10px] font-bold text-gray-500 mb-2 uppercase">{item.type}</p>
+                      
+                      <p className="text-[10px] text-gray-400 mb-2">Order Date: {item.date}</p>
+                      
+                      <div className="mt-auto flex justify-between items-end w-full pt-4">
+                        <div className="w-full bg-gray-50 text-gray-500 font-medium py-2 px-4 rounded-xl text-xs flex items-center justify-center border border-gray-100 italic">
+                          Click card to view downloadable chapters
+                        </div>
+                      </div>
+
+                      {/* Expand indicator chevron */}
+                      <div className="absolute top-1 right-0 text-gray-400">
+                        <svg className={`w-5 h-5 transition-transform duration-300 ${isExpanded ? 'rotate-180 text-green-500' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Expanded Chapters List */}
+                  {isExpanded && (
+                    <div className="bg-gray-50 px-5 py-4 border-t border-gray-100">
+                      <p className="text-xs font-bold text-gray-600 mb-3 uppercase tracking-wider">
+                        Included Chapters ({item.chapters.length})
+                      </p>
+                      {item.chapters.length > 0 ? (
+                        <ul className="space-y-2">
+                          {item.chapters.map((ch: any, idx: number) => (
+                            <li key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm text-gray-700 bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                              <div className="flex items-center gap-2.5">
+                                <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                                <span className="leading-snug font-medium">{ch.name}</span>
+                              </div>
+                              {item.status === 'completed' && ch.pdfUrl ? (
+                                <a 
+                                  href={getPdfUrl(ch.pdfUrl)}
+                                  target="_blank" 
+                                  rel="noopener noreferrer" 
+                                  className="text-green-700 bg-green-50 hover:bg-green-100 border border-green-200 px-4 py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center sm:justify-start gap-1.5 whitespace-nowrap"
+                                >
+                                  <DownloadCloud className="w-4 h-4" /> Download
+                                </a>
+                              ) : item.status !== 'completed' ? (
+                                <span className="text-orange-500 bg-orange-50 px-3 py-1.5 rounded-lg text-xs font-bold border border-orange-100 whitespace-nowrap">
+                                  Pending Admin Approval
+                                </span>
+                              ) : null}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-xs text-gray-500 italic">No specific chapters listed.</p>
+                      )}
                     </div>
                   )}
                 </div>
-                
-                <div className="flex flex-col py-1 w-full">
-                  <h3 className="font-bold text-gray-900 text-sm mb-1 leading-tight">{item.title}</h3>
-                  <p className="text-[10px] font-bold text-gray-500 mb-2 uppercase">{item.type}</p>
-                  
-                  <p className="text-[10px] text-gray-400 mb-2">Order Date: {item.date}</p>
-                  
-                  <div className="mt-auto flex justify-between items-end w-full">
-                    {item.status === 'completed' && item.url ? (
-                      <a href={item.url} target="_blank" rel="noopener noreferrer" className="w-full bg-green-50 hover:bg-green-100 text-green-700 font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 transition-colors border border-green-200">
-                        <DownloadCloud className="w-4 h-4" /> Download PDF
-                      </a>
-                    ) : (
-                      <div className="w-full bg-orange-50 text-orange-700 font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 border border-orange-200">
-                        <div className="w-3 h-3 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
-                        Generating... (Pending Admin)
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
         

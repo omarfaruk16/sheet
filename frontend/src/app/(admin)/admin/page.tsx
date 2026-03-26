@@ -1,41 +1,45 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import { adminAxios } from '@/lib/adminAuth';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { TrendingUp, Users, ShoppingCart, Repeat, DollarSign } from 'lucide-react';
-
-// Mock data until API is fully connected
-const mockData = [
-  { name: 'Mon', sales: 4000, revenue: 2400 },
-  { name: 'Tue', sales: 3000, revenue: 1398 },
-  { name: 'Wed', sales: 2000, revenue: 9800 },
-  { name: 'Thu', sales: 2780, revenue: 3908 },
-  { name: 'Fri', sales: 1890, revenue: 4800 },
-  { name: 'Sat', sales: 2390, revenue: 3800 },
-  { name: 'Sun', sales: 3490, revenue: 4300 },
-];
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalOrders: 0,
     totalIncome: 0,
-    newSales: 0,
+    newCustomers: 0,
     repeatedSales: 0,
   });
+  const [chartData, setChartData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // In a real scenario, fetch this from `/api/admin/stats` using axios
-    // Example: axios.get(process.env.NEXT_PUBLIC_API_URL + '/admin/stats', { headers: { Authorization: `Bearer ${token}` } })
-    setStats({
-      totalUsers: 145,
-      totalOrders: 312,
-      totalIncome: 12450.50,
-      newSales: 215,
-      repeatedSales: 97,
-    });
+    const fetchStats = async () => {
+      try {
+        const { data } = await adminAxios.get('/dashboard-stats');
+        setStats({
+          totalUsers: data.totalUsers,
+          totalOrders: data.totalOrders,
+          totalIncome: data.totalIncome,
+          newCustomers: data.newCustomers,
+          repeatedSales: data.repeatedSales,
+        });
+        setChartData(data.chartData || []);
+      } catch (error) {
+        console.error('Failed to load dashboard stats', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
   }, []);
+
+  if (loading) {
+    return <div className="p-8 text-center text-gray-500">Loading dashboard...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -46,7 +50,7 @@ export default function AdminDashboard() {
         {[
           { title: 'Total Income', value: `৳${stats.totalIncome.toLocaleString()}`, icon: DollarSign, color: 'text-green-600', bg: 'bg-green-100' },
           { title: 'Total Sales', value: stats.totalOrders.toLocaleString(), icon: ShoppingCart, color: 'text-blue-600', bg: 'bg-blue-100' },
-          { title: 'New Customers', value: stats.newSales.toLocaleString(), icon: Users, color: 'text-purple-600', bg: 'bg-purple-100' },
+          { title: 'New Customers', value: stats.newCustomers.toLocaleString(), icon: Users, color: 'text-purple-600', bg: 'bg-purple-100' },
           { title: 'Repeated Sales', value: stats.repeatedSales.toLocaleString(), icon: Repeat, color: 'text-orange-600', bg: 'bg-orange-100' },
         ].map((stat, i) => (
           <div key={i} className="flex items-center p-6 bg-white rounded-2xl shadow-sm border border-gray-100">
@@ -70,7 +74,7 @@ export default function AdminDashboard() {
           </div>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={mockData}>
+              <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#6B7280'}} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{fill: '#6B7280'}} dx={-10} />
@@ -91,7 +95,7 @@ export default function AdminDashboard() {
           </div>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={mockData}>
+              <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#6B7280'}} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{fill: '#6B7280'}} dx={-10} />

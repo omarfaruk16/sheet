@@ -22,7 +22,18 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCred = await signInWithEmailAndPassword(auth, email, password);
+      // Sync with backend
+      const token = await userCred.user.getIdToken();
+      await fetch(process.env.NEXT_PUBLIC_API_URL + '/auth/sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ email: userCred.user.email })
+      });
+
       toast.success('Login Successful!');
       router.push('/profile'); // Redirect after login
     } catch (err: any) {
@@ -39,7 +50,21 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const userCred = await signInWithPopup(auth, provider);
+      // Sync with backend
+      const token = await userCred.user.getIdToken();
+      await fetch(process.env.NEXT_PUBLIC_API_URL + '/auth/sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ 
+          email: userCred.user.email,
+          name: userCred.user.displayName
+        })
+      });
+
       toast.success('Login with Google Successful!');
       router.push('/profile');
     } catch (err: any) {

@@ -31,8 +31,7 @@ export default function CartPage() {
   };
 
   const subtotal = items.reduce((sum, item) => sum + item.price, 0);
-  const tax = subtotal * 0.05; // 5% mock tax
-  const total = subtotal + tax;
+  const total = subtotal;
 
   if (items.length === 0) {
     return (
@@ -108,10 +107,6 @@ export default function CartPage() {
             <div className="flex justify-between items-center text-sm">
               <span className="text-gray-500">Subtotal</span>
               <span className="font-medium text-gray-900">৳{subtotal.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-500">Platform Fee (5%)</span>
-              <span className="font-medium text-gray-900">৳{tax.toFixed(2)}</span>
             </div>
             <div className="w-full h-[1px] bg-gray-100 my-2"></div>
             <div className="flex justify-between items-center">

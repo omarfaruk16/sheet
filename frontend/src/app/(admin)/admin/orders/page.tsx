@@ -223,10 +223,6 @@ export default function AdminOrders() {
                   <span className="text-gray-500">Subtotal:</span>
                   <span>৳{Number(selectedOrder.subtotal).toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between w-48">
-                  <span className="text-gray-500">Service Fee:</span>
-                  <span>৳{Number(selectedOrder.serviceFee).toFixed(2)}</span>
-                </div>
                 <div className="flex justify-between w-48 text-lg font-black text-gray-900 mt-1 pt-1 border-t border-gray-200">
                   <span>Total:</span>
                   <span>৳{Number(selectedOrder.totalAmount).toFixed(2)}</span>

@@ -180,3 +180,72 @@ See more info: https://nextjs.org/docs/messages/next-image-unconfigured-host
 Γ¿» upstream image http://localhost:5000/uploads/IMG-892437D9.png resolved to private ip ["::1","127.0.0.1"]
 Γ¿» The requested resource isn't a valid image for https://sl.bing.net/kAc3sfTFuRo received null
  GET /products/undefined 200 in 365ms (next.js: 107ms, application-code: 258ms)
+Γ£ô Compiled in 1356ms
+ GET /profile/downloads 200 in 1786ms (next.js: 841ms, application-code: 945ms)
+Γ¿» upstream image http://localhost:5000/uploads/IMG-892437D9.png resolved to private ip ["::1","127.0.0.1"]
+Γ¿» The requested resource isn't a valid image for https://sl.bing.net/kAc3sfTFuRo received null
+Γ£ô Compiled in 732ms
+Γ£ô Compiled in 102ms
+ GET /profile/downloads 200 in 1788ms (next.js: 873ms, application-code: 915ms)
+Γ¿» upstream image http://localhost:5000/uploads/IMG-892437D9.png resolved to private ip ["::1","127.0.0.1"]
+Γ¿» The requested resource isn't a valid image for https://sl.bing.net/kAc3sfTFuRo received null
+ GET /profile/downloads 200 in 231ms (next.js: 22ms, application-code: 209ms)
+Γ¿» upstream image http://localhost:5000/uploads/IMG-892437D9.png resolved to private ip ["::1","127.0.0.1"]
+Γ¿» The requested resource isn't a valid image for https://sl.bing.net/kAc3sfTFuRo received null
+ GET /admin/products 200 in 257ms (next.js: 107ms, application-code: 150ms)
+ GET /admin/products/edit/cmn6upssb0001eedjr6ddfqdq 200 in 1677ms (next.js: 1571ms, application-code: 106ms)
+Γ£ô Compiled in 607ms
+ GET /profile/downloads 200 in 1981ms (next.js: 823ms, application-code: 1157ms)
+Γ¿» upstream image http://localhost:5000/uploads/IMG-892437D9.png resolved to private ip ["::1","127.0.0.1"]
+Γ¿» The requested resource isn't a valid image for https://sl.bing.net/kAc3sfTFuRo received null
+ GET / 200 in 675ms (next.js: 519ms, application-code: 156ms)
+ GET /products/cmn6upssb0001eedjr6ddfqdq 200 in 245ms (next.js: 144ms, application-code: 101ms)
+Γ¿» upstream image http://localhost:5000/uploads/IMG-892437D9.png resolved to private ip ["::1","127.0.0.1"]
+ GET / 200 in 69ms (next.js: 14ms, application-code: 56ms)
+ GET /products/69bbb2129dc4cf9810a4d66a 200 in 94ms (next.js: 30ms, application-code: 64ms)
+Γ¿» The requested resource isn't a valid image for https://sl.bing.net/kAc3sfTFuRo received null
+ GET /checkout 200 in 173ms (next.js: 96ms, application-code: 77ms)
+ GET /cart 200 in 201ms (next.js: 134ms, application-code: 67ms)
+Γ¿» The requested resource isn't a valid image for https://sl.bing.net/kAc3sfTFuRo received null
+ GET /checkout 200 in 63ms (next.js: 11ms, application-code: 53ms)
+Γ¿» The requested resource isn't a valid image for https://sl.bing.net/kAc3sfTFuRo received null
+Γ£ô Compiled in 611ms
+Γ£ô Compiled in 503ms
+ GET /admin 200 in 1708ms (next.js: 847ms, application-code: 861ms)
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width. (file://E:/Final Project (Full-stack)
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width. (file://E:/Final Project (Full-stack)
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width. (file://E:/Final Project (Full-stack)
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width. (file://E:/Final Project (Full-stack)
+Γ£ô Compiled in 345ms
+ GET /admin/users 200 in 193ms (next.js: 108ms, application-code: 85ms)
+ GET /admin/tags 200 in 213ms (next.js: 130ms, application-code: 82ms)
+ GET /admin/orders 200 in 307ms (next.js: 242ms, application-code: 66ms)
+ GET /admin 200 in 86ms (next.js: 11ms, application-code: 75ms)
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width. (file://E:/Final Project (Full-stack)
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width. (file://E:/Final Project (Full-stack)
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width. (file://E:/Final Project (Full-stack)
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width. (file://E:/Final Project (Full-stack)
