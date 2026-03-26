@@ -1,0 +1,83 @@
+[ERROR] ENOENT: no such file or directory, open 'E:\Final Project (Full-stack)\Sheet\backend\public\downloads\23IUCeLwhqUNJMcKC2Kx3FvsizU2\{
+  _id: new ObjectId('69bbb2129dc4cf9810a4d66a'),
+  title: 'Biology',
+  uniqueId: 'PRD-064051A0',
+  coverImage: 'https:\sl.bing.net\kAc3sfTFuRo',
+  description: 'Very Good',
+  regularPrice: 1200,
+  discountPrice: 999,
+  demoPdfUrl: 'https:\drive.google.com\file\d\1RCApcri4AGaxjCOsONpE-rKPt6GT7-QY\view?usp=drive_link',
+  category: new ObjectId('69bba9399dc4cf9810a4d65e'),
+  tags: [],
+  allChaptersPrice: 999,
+  chapters: [
+    {
+      name: 'Chapter 1',
+      pdfUrl: 'http:\localhost:5000\uploads\PDF-9476DC29.pdf',
+      price: 99,
+      order: 1,
+      _id: new ObjectId('69bd64e9ebc01224bbadc688')
+    },
+    {
+      name: 'Chepter 2',
+      pdfUrl: 'https:\drive.google.com\file\d\1RCApcri4AGaxjCOsONpE-rKPt6GT7-QY\view',
+      price: 99,
+      order: 2,
+      _id: new ObjectId('69bd64e9ebc01224bbadc689')
+    },
+    {
+      name: 'Chapter 3',
+      pdfUrl: 'https:\drive.google.com\file\d\1RCApcri4AGaxjCOsONpE-rKPt6GT7-QY\view',
+      price: 99,
+      order: 3,
+      _id: new ObjectId('69bd64e9ebc01224bbadc68a')
+    }
+  ],
+  createdAt: 2026-03-19T08:21:38.372Z,
+  updatedAt: 2026-03-20T15:16:57.678Z,
+  __v: 0
+}_1774371438792.pdf'
+Error: ENOENT: no such file or directory, open 'E:\Final Project (Full-stack)\Sheet\backend\public\downloads\23IUCeLwhqUNJMcKC2Kx3FvsizU2\{
+  _id: new ObjectId('69bbb2129dc4cf9810a4d66a'),
+  title: 'Biology',
+  uniqueId: 'PRD-064051A0',
+  coverImage: 'https:\sl.bing.net\kAc3sfTFuRo',
+  description: 'Very Good',
+  regularPrice: 1200,
+  discountPrice: 999,
+  demoPdfUrl: 'https:\drive.google.com\file\d\1RCApcri4AGaxjCOsONpE-rKPt6GT7-QY\view?usp=drive_link',
+  category: new ObjectId('69bba9399dc4cf9810a4d65e'),
+  tags: [],
+  allChaptersPrice: 999,
+  chapters: [
+    {
+      name: 'Chapter 1',
+      pdfUrl: 'http:\localhost:5000\uploads\PDF-9476DC29.pdf',
+      price: 99,
+      order: 1,
+      _id: new ObjectId('69bd64e9ebc01224bbadc688')
+    },
+    {
+      name: 'Chepter 2',
+      pdfUrl: 'https:\drive.google.com\file\d\1RCApcri4AGaxjCOsONpE-rKPt6GT7-QY\view',
+      price: 99,
+      order: 2,
+      _id: new ObjectId('69bd64e9ebc01224bbadc689')
+    },
+    {
+      name: 'Chapter 3',
+      pdfUrl: 'https:\drive.google.com\file\d\1RCApcri4AGaxjCOsONpE-rKPt6GT7-QY\view',
+      price: 99,
+      order: 3,
+      _id: new ObjectId('69bd64e9ebc01224bbadc68a')
+    }
+  ],
+  createdAt: 2026-03-19T08:21:38.372Z,
+  updatedAt: 2026-03-20T15:16:57.678Z,
+  __v: 0
+}_1774371438792.pdf'
+    at Object.openSync (node:fs:559:18)
+    at Object.writeFileSync (node:fs:2426:35)
+    at generateCustomPdf (E:\Final Project (Full-stack)\Sheet\backend\src\utils\pdfGenerator.ts:108:10)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+[SUCCESS] Finished PDF generation for order 69bcf2a86d1a62cd31f06cf6
