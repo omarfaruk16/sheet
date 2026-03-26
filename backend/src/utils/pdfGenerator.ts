@@ -69,7 +69,7 @@ export const generateCustomPdf = async (orderId: string) => {
               const boxWidth = 400;
               const boxHeight = 100;
               const boxX = width / 2 - boxWidth / 2;
-              const boxY = 30; // 30pt from bottom
+              const boxY = 200; // 30pt from bottom
               
               page.drawRectangle({
                 x: boxX - 10, y: boxY - 10, width: boxWidth + 20, height: boxHeight + 20,
@@ -99,37 +99,37 @@ export const generateCustomPdf = async (orderId: string) => {
             }
 
             // --- Task 2: Header on EVERY page ---
-            const hdrHeight = 28;
+            const hdrHeight = 58;
             const hdrY = height - hdrHeight;
             
-            page.drawRectangle({
-              x: 0, y: height - 35, width: width, height: 35,
-              color: rgb(1, 1, 1)
-            });
+            // page.drawRectangle({
+            //   x: 0, y: height - 35, width: width, height: 35,
+            //   color: rgb(1, 1, 1)
+            // });
             
-            page.drawRectangle({
-              x: 0, y: hdrY, width: width, height: hdrHeight,
-              color: rgb(242/255, 242/255, 242/255)
-            });
+            // page.drawRectangle({
+            //   x: 0, y: hdrY, width: width, height: hdrHeight,
+            //   color: rgb(242/255, 242/255, 242/255)
+            // });
             
-            page.drawLine({
-              start: { x: 0, y: hdrY },
-              end: { x: width, y: hdrY },
-              thickness: 0.5,
-              color: rgb(0, 0, 0)
-            });
+            // page.drawLine({
+            //   start: { x: 0, y: hdrY },
+            //   end: { x: width, y: hdrY },
+            //   thickness: 0.5,
+            //   color: rgb(0, 0, 0)
+            // });
             
             const headerNameStr = item.headerLeftText || 'Customer Name';
             const headerEmailStr = item.headerRightText || 'customer@email.com';
             const textY = hdrY + (hdrHeight - 9) / 2;
             
-            page.drawText(headerNameStr, { x: 8, y: textY, size: 9, font: boldFont, color: rgb(30/255, 30/255, 30/255) });
+            page.drawText(headerNameStr, { x: 8, y: textY, size: 15, font: boldFont, color: rgb(30/255, 30/255, 30/255) });
             
             try {
-              const emailWidth = regularFont.widthOfTextAtSize(headerEmailStr, 9);
-              page.drawText(headerEmailStr, { x: width - emailWidth - 8, y: textY, size: 9, font: regularFont, color: rgb(30/255, 30/255, 30/255) });
+              const emailWidth = regularFont.widthOfTextAtSize(headerEmailStr, 15);
+              page.drawText(headerEmailStr, { x: width - emailWidth - 8, y: textY, size: 15, font: regularFont, color: rgb(30/255, 30/255, 30/255) });
             } catch(e) {
-              page.drawText(headerEmailStr, { x: width - 150, y: textY, size: 9, font: regularFont, color: rgb(30/255, 30/255, 30/255) });
+              page.drawText(headerEmailStr, { x: width - 150, y: textY, size: 15, font: regularFont, color: rgb(30/255, 30/255, 30/255) });
             }
 
             // --- Task 3: Diagonal Watermark ---
@@ -138,11 +138,11 @@ export const generateCustomPdf = async (orderId: string) => {
               try {
                 const wmWidth = boldFont.widthOfTextAtSize(watermarkStr, 52);
                 page.drawText(watermarkStr, {
-                  x: width / 2 - wmWidth / 2, y: height / 2, size: 52, font: boldFont, color: rgb(0, 0, 0), opacity: 0.03, rotate: degrees(45)
+                  x: width / 2 - wmWidth / 2, y: height / 2, size: 72, font: boldFont, color: rgb(0, 0, 0), opacity: 0.3, rotate: degrees(45)
                 });
               } catch(e) {
                 page.drawText(watermarkStr, {
-                  x: width / 4, y: height / 2, size: 52, font: boldFont, color: rgb(0, 0, 0), opacity: 0.03, rotate: degrees(45)
+                  x: width / 4, y: height / 2, size: 72, font: boldFont, color: rgb(0, 0, 0), opacity: 0.3, rotate: degrees(45)
                 });
               }
             }

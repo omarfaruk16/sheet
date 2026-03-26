@@ -135,7 +135,7 @@ export default function DownloadsLibrary() {
                       <p className="text-[10px] text-gray-400 mb-2">Order Date: {item.date}</p>
                       
                       <div className="mt-auto flex justify-between items-end w-full pt-4">
-                        <div className="w-full bg-gray-50 text-gray-500 font-medium py-2 px-4 rounded-xl text-xs flex items-center justify-center border border-gray-100 italic">
+                        <div className="w-full bg-green-500 text-white font-medium py-2 px-4 rounded-xl text-xs flex items-center justify-center border border-gray-100">
                           Click card to view downloadable chapters
                         </div>
                       </div>

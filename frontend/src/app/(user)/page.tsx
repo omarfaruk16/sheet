@@ -96,7 +96,7 @@ export default function HomePage() {
       </div>
 
       {/* Hero Banner */}
-      <div className="px-6 mb-8">
+      <div className="px-6 mb-8 flex gap-4">
         <div className="relative w-full h-40 rounded-3xl overflow-hidden shadow-lg bg-gradient-to-br from-green-700 to-emerald-900">
           <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=800&q=80)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
           <div className="absolute inset-0 p-6 flex flex-col justify-center">
@@ -107,6 +107,21 @@ export default function HomePage() {
             <h3 className="text-xl font-bold text-white mb-1">Sheet Bundle 2024</h3>
             <p className="text-xs text-green-100 mb-4 max-w-[220px]">Comprehensive HSC formula sheets &amp; suggestion books at 30% off.</p>
             <button className="bg-white hover:bg-green-50 text-green-800 text-xs font-bold px-4 py-2 rounded-full self-start shadow-sm transition-colors">
+              View Collection
+            </button>
+          </div>
+        </div>
+
+        <div className="relative w-full h-40 rounded-3xl overflow-hidden shadow-lg bg-gradient-to-br from-orange-700 to-orange-900">
+          <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=800&q=80)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
+          <div className="absolute inset-0 p-6 flex flex-col justify-center">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-[10px] font-bold text-white uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-sm">Offer</span>
+              <span className="text-[10px] font-bold text-orange-200 uppercase tracking-wider">Exam Season</span>
+            </div>
+            <h3 className="text-xl font-bold text-white mb-1">Sheet Bundle 2024</h3>
+            <p className="text-xs text-orange-100 mb-4 max-w-[220px]">Comprehensive HSC formula sheets &amp; suggestion books at 30% off.</p>
+            <button className="bg-white hover:bg-orange-50 text-orange-800 text-xs font-bold px-4 py-2 rounded-full self-start shadow-sm transition-colors">
               View Collection
             </button>
           </div>
