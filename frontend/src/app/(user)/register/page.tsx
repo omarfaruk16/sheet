@@ -1,20 +1,83 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { User, Mail, Lock, AlertCircle, Loader2 } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import toast from 'react-hot-toast';
+import { clearLocalSession, setLocalSession, type LocalSessionUser } from '@/lib/userSession';
 
-export default function RegisterPage() {
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
+type ErrorLike = {
+  code?: string;
+  message?: string;
+};
+
+type LocalAuthSuccess = {
+  token: string;
+  user: {
+    id?: string;
+    uid?: string;
+    name?: string;
+    email?: string;
+    role?: string;
+    authProvider?: 'local' | 'firebase';
+  };
+};
+
+const toLocalSessionUser = (user: LocalAuthSuccess['user']): LocalSessionUser | null => {
+  if (!user.uid) return null;
+  return {
+    id: user.id,
+    uid: user.uid,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    authProvider: 'local',
+  };
+};
+
+const toErrorLike = (error: unknown): ErrorLike => {
+  if (typeof error === 'object' && error !== null) {
+    const candidate = error as Record<string, unknown>;
+    return {
+      code: typeof candidate.code === 'string' ? candidate.code : undefined,
+      message: typeof candidate.message === 'string' ? candidate.message : undefined,
+    };
+  }
+  return {};
+};
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  const err = toErrorLike(error);
+  return err.message || fallback;
+};
+
+const shouldUseLocalFallback = (error: unknown) => {
+  const err = toErrorLike(error);
+  const code = (err?.code || '').toLowerCase();
+  const message = (err?.message || '').toLowerCase();
+  return (
+    code.includes('api-key-not-valid') ||
+    code.includes('invalid-api-key') ||
+    message.includes('api-key-not-valid') ||
+    message.includes('invalid api key')
+  );
+};
+
+function RegisterContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const redirectTo = searchParams.get('redirect') || '/profile';
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,20 +92,66 @@ export default function RegisterPage() {
       
       // Call backend API to sync user
       try {
-        await fetch(process.env.NEXT_PUBLIC_API_URL + '/auth/sync', {
+        const token = await user.getIdToken();
+        await fetch(API_URL + '/auth/sync', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ uid: user.uid, email: user.email, name: name })
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ email: user.email, name })
         });
       } catch (syncError) {
-        console.error("Failed to sync user with backend (MongoDB might be unavailable)", syncError);
+        console.error('Failed to sync user with backend', syncError);
       }
       
+      clearLocalSession();
       toast.success('Account Created Successfully!');
-      router.push('/profile');
-    } catch (err: any) {
+      router.push(redirectTo);
+    } catch (err: unknown) {
+      if (shouldUseLocalFallback(err)) {
+        try {
+          const res = await fetch(API_URL + '/auth/register-local', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, password }),
+          });
+
+          const data = (await res.json()) as Partial<LocalAuthSuccess> & { message?: string };
+          if (!res.ok) {
+            const message = data?.message || 'Local registration failed';
+            setError(message);
+            toast.error('Registration Failed');
+            return;
+          }
+
+          if (!data.token || !data.user) {
+            setError('Local registration failed');
+            toast.error('Registration Failed');
+            return;
+          }
+
+          const localUser = toLocalSessionUser(data.user);
+          if (!localUser) {
+            setError('Local registration failed');
+            toast.error('Registration Failed');
+            return;
+          }
+
+          setLocalSession({ token: data.token, user: localUser });
+          toast.success('Account Created Successfully!');
+          router.push(redirectTo);
+          return;
+        } catch (fallbackError: unknown) {
+          console.error(fallbackError);
+          setError(getErrorMessage(fallbackError, 'Failed to register'));
+          toast.error('Registration Failed');
+          return;
+        }
+      }
+
       console.error(err);
-      setError(err.message || 'Failed to register');
+      setError(getErrorMessage(err, 'Failed to register'));
       toast.error('Registration Failed');
     } finally {
       setLoading(false);
@@ -58,20 +167,28 @@ export default function RegisterPage() {
       
       // Call backend API to sync user
       try {
-        await fetch(process.env.NEXT_PUBLIC_API_URL + '/auth/sync', {
+        const token = await user.getIdToken();
+        await fetch(API_URL + '/auth/sync', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ uid: user.uid, email: user.email, name: user.displayName || user.email?.split('@')[0] })
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            email: user.email,
+            name: user.displayName || user.email?.split('@')[0],
+          })
         });
       } catch (syncError) {
-        console.error("Failed to sync user with backend", syncError);
+        console.error('Failed to sync user with backend', syncError);
       }
 
+      clearLocalSession();
       toast.success('Registered with Google Successfully!');
-      router.push('/profile');
-    } catch (err: any) {
+      router.push(redirectTo);
+    } catch (err: unknown) {
       console.error(err);
-      setError(err.message || 'Failed to register with Google');
+      setError(getErrorMessage(err, 'Failed to register with Google'));
       toast.error('Google Registration Failed');
     } finally {
       setLoading(false);
@@ -163,7 +280,7 @@ export default function RegisterPage() {
 
         <p className="text-center text-xs text-gray-500 mt-8">
           Already have an account?{' '}
-          <Link href="/login" className="font-bold text-green-500 hover:underline">
+          <Link href={`/login?redirect=${encodeURIComponent(redirectTo)}`} className="font-bold text-green-500 hover:underline">
             Login Here
           </Link>
         </p>
@@ -171,3 +288,16 @@ export default function RegisterPage() {
     </div>
   );
 }
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+      </div>
+    }>
+      <RegisterContent />
+    </Suspense>
+  );
+}
+

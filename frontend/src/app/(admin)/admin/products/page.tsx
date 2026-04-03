@@ -74,50 +74,74 @@ export default function AdminProducts() {
             <tr className="bg-gray-50 border-b border-gray-100 text-sm font-medium text-gray-500">
               <th className="px-6 py-4">Product Name</th>
               <th className="px-6 py-4">Unique ID</th>
-              <th className="px-6 py-4">Price</th>
+              <th className="px-6 py-4">Regular Price</th>
+              <th className="px-6 py-4">Discount Price</th>
+              <th className="px-6 py-4">Discount %</th>
               <th className="px-6 py-4">Chapters</th>
+              <th className="px-6 py-4">Created</th>
               <th className="px-6 py-4 text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
                   Loading products...
                 </td>
               </tr>
             ) : filteredProducts.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-8 text-center text-gray-400">
+                <td colSpan={8} className="px-6 py-8 text-center text-gray-400">
                   {search ? 'No products match your search.' : 'No products found. Click "Add Product" to create one.'}
                 </td>
               </tr>
             ) : (
-              filteredProducts.map((p: any) => (
-                <tr key={p.id || p._id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="font-medium text-gray-900">{p.title}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-md text-xs font-mono border border-gray-200">
-                      {p.uniqueId}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 font-medium text-green-700">৳{Number(p.regularPrice).toFixed(2)}</td>
-                  <td className="px-6 py-4 text-gray-500">{p.chapters?.length || 0}</td>
-                  <td className="px-6 py-4 text-right space-x-2">
-                    <Link href={`/admin/products/edit/${p.id || p._id}`} className="text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-colors inline-block">
-                      <Edit2 className="w-4 h-4" />
-                    </Link>
-                    <button
-                      onClick={() => handleDelete(p.id || p._id, p.title)}
-                      className="text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))
+              filteredProducts.map((p: any) => {
+                const hasDiscount = p.discountPrice && p.regularPrice > p.discountPrice;
+                const discountPct = hasDiscount
+                  ? Math.round(100 - (p.discountPrice / p.regularPrice) * 100)
+                  : 0;
+                return (
+                  <tr key={p.id || p._id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="font-medium text-gray-900 max-w-xs truncate">{p.title}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-md text-xs font-mono border border-gray-200">
+                        {p.uniqueId}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 font-medium text-gray-700">৳{Number(p.regularPrice).toFixed(2)}</td>
+                    <td className="px-6 py-4 font-medium text-blue-700">
+                      {p.discountPrice ? `৳${Number(p.discountPrice).toFixed(2)}` : '-'}
+                    </td>
+                    <td className="px-6 py-4">
+                      {hasDiscount ? (
+                        <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold">
+                          -{discountPct}%
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-gray-500">{p.chapters?.length || 0}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500">
+                      {new Date(p.createdAt || Date.now()).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 text-right space-x-2">
+                      <Link href={`/admin/products/edit/${p.id || p._id}`} className="text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-colors inline-block">
+                        <Edit2 className="w-4 h-4" />
+                      </Link>
+                      <button
+                        onClick={() => handleDelete(p.id || p._id, p.title)}
+                        className="text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

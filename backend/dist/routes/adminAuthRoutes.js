@@ -70,4 +70,71 @@ router.get('/me', adminAuthMiddleware_1.protectAdmin, async (req, res) => {
         role: req.adminUser?.role,
     });
 });
+// @desc    Get dashboard statistics
+// @route   GET /api/admin/dashboard-stats
+// @access  Private (Admin JWT)
+router.get('/dashboard-stats', adminAuthMiddleware_1.protectAdmin, async (req, res) => {
+    try {
+        const orders = await prisma_1.prisma.order.findMany({
+            where: { status: 'completed' },
+            select: { userId: true, totalAmount: true, createdAt: true }
+        });
+        const totalOrders = orders.length;
+        const totalIncome = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+        const totalUsers = await prisma_1.prisma.user.count();
+        const userOrderCounts = orders.reduce((acc, order) => {
+            acc[order.userId] = (acc[order.userId] || 0) + 1;
+            return acc;
+        }, {});
+        let repeatedSales = 0;
+        for (const userId in userOrderCounts) {
+            if (userOrderCounts[userId] > 1) {
+                repeatedSales++;
+            }
+        }
+        const trends = {};
+        const today = new Date();
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date(today);
+            date.setDate(today.getDate() - i);
+            // Use consistently fixed locale date string parts to group
+            const dayName = date.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'Asia/Dhaka' });
+            const dayKey = date.toISOString().split('T')[0];
+            trends[dayKey] = { sales: 0, revenue: 0, name: dayName };
+        }
+        const past7Days = new Date(today);
+        past7Days.setDate(past7Days.getDate() - 7);
+        const recentOrders = orders.filter(o => new Date(o.createdAt) >= past7Days);
+        for (const order of recentOrders) {
+            // Need to convert DB UTC time to Dhaka time to assign to day correctly
+            const orderDateStr = new Date(order.createdAt).toLocaleDateString('en-US', { timeZone: 'Asia/Dhaka', year: 'numeric', month: '2-digit', day: '2-digit' });
+            // orderDateStr is MM/DD/YYYY, need to convert to YYYY-MM-DD to match dayKey
+            const [month, day, year] = orderDateStr.split('/');
+            const formattedDateKey = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            if (trends[formattedDateKey]) {
+                trends[formattedDateKey].sales += 1;
+                trends[formattedDateKey].revenue += order.totalAmount;
+            }
+        }
+        const chartData = Object.keys(trends)
+            .sort() // Ensure chronological order
+            .map(key => ({
+            name: trends[key].name,
+            sales: trends[key].sales,
+            revenue: trends[key].revenue
+        }));
+        res.json({
+            totalUsers,
+            totalOrders,
+            totalIncome,
+            newCustomers: totalUsers, // Total unique registered users
+            repeatedSales,
+            chartData
+        });
+    }
+    catch (error) {
+        console.error('Dashboard stats error:', error);
+        res.status(500).json({ message: 'Server error fetching dashboard stats' });
+    }
+});
 exports.default = router;

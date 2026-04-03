@@ -3,11 +3,14 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Settings, Download, Heart, Clock, ShieldCheck, ChevronRight, LogOut, HelpCircle } from 'lucide-react';
+import { Settings, Download, Heart, Clock, ShieldCheck, ChevronRight, LogOut, HelpCircle, Lock, Wallet } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { clearLocalSession, getAccessToken, getLocalSession } from '@/lib/userSession';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -16,31 +19,56 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        router.push('/login');
+    const loadOrderCount = async () => {
+      try {
+        const token = await getAccessToken();
+        if (!token) {
+          setOrderCount(0);
+          return;
+        }
+
+        const res = await axios.get(`${API_URL}/orders/my`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setOrderCount(Array.isArray(res.data) ? res.data.length : 0);
+      } catch {
+        setOrderCount(0);
+      }
+    };
+
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setCurrentUser(user);
+        await loadOrderCount();
+        setLoading(false);
         return;
       }
 
-      setCurrentUser(user);
+      const local = getLocalSession();
+      if (local?.user) {
+        setCurrentUser({
+          displayName: local.user.name,
+          email: local.user.email,
+          metadata: { creationTime: new Date().toISOString() },
+        });
+        await loadOrderCount();
+      } else {
+        setCurrentUser(null);
+        setOrderCount(0);
+      }
+
       setLoading(false);
-        try {
-          const token = await user.getIdToken();
-          const res = await axios.get(
-            (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api') + '/orders/my',
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-          setOrderCount(Array.isArray(res.data) ? res.data.length : 0);
-        } catch {
-          // Non-critical, leave count at 0
-        }
     });
-    return () => unsub();
+
+    return () => unsubscribe();
   }, []);
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      clearLocalSession();
+      if (auth.currentUser) {
+        await signOut(auth);
+      }
       toast.success('Logged out successfully');
       router.push('/login');
     } catch (err) {
@@ -52,7 +80,7 @@ export default function ProfilePage() {
     if (!currentUser) return '?';
     if (currentUser.displayName) {
       const parts = currentUser.displayName.trim().split(' ');
-      return parts.length >= 2
+      return parts.length > 1
         ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
         : parts[0].slice(0, 2).toUpperCase();
     }
@@ -61,8 +89,8 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full animate-spin" />
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
       </div>
     );
   }
@@ -78,118 +106,114 @@ export default function ProfilePage() {
         
         <div className="flex justify-between items-start mb-6">
           <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
-          <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
-            <Settings className="w-6 h-6" />
-          </button>
+          <Link href="/profile/settings" className="text-gray-600 hover:text-gray-900">
+            <Settings className="w-5 h-5" />
+          </Link>
         </div>
 
-        <div className="flex items-center gap-4">
-          {currentUser?.photoURL ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={currentUser.photoURL}
-              alt={displayName}
-              referrerPolicy="no-referrer"
-              className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md"
-            />
-          ) : (
-            <div className="w-20 h-20 rounded-full bg-green-100 border-4 border-white shadow-md flex items-center justify-center text-green-700 text-2xl font-bold relative">
-              {getUserInitials()}
-              <div className="absolute bottom-1 right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
-            </div>
-          )}
-          <div>
-            <h2 className="text-xl font-bold text-gray-900 mb-1">{displayName}</h2>
-            <p className="text-xs text-gray-500 mb-1">{displayEmail}</p>
-            <p className="text-[10px] font-bold text-green-600 uppercase tracking-wider bg-green-50 px-2 py-0.5 rounded-md inline-block">
-              {currentUser ? 'Member' : 'Guest'}
+        {/* User Info Card */}
+        <div className="flex items-center gap-4 mb-8">
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-bold text-xl">
+            {getUserInitials()}
+          </div>
+          <div className="flex-1">
+            <h2 className="text-xl font-semibold text-gray-900">{displayName}</h2>
+            <p className="text-gray-600">{displayEmail}</p>
+          </div>
+        </div>
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="bg-green-50 p-4 rounded-lg">
+            <p className="text-gray-600 text-sm mb-1">Total Orders</p>
+            <p className="text-2xl font-bold text-green-600">{orderCount}</p>
+          </div>
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <p className="text-gray-600 text-sm mb-1">Member Since</p>
+            <p className="text-sm font-semibold text-blue-600">
+              {new Date(currentUser?.metadata?.creationTime || Date.now()).toLocaleDateString()}
             </p>
           </div>
         </div>
       </div>
 
-      <div className="px-6 mt-6 space-y-6">
-        
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
-              <Download className="w-5 h-5 text-blue-500" />
-            </div>
-            <div>
-              <p className="text-[10px] text-gray-500 font-bold uppercase">Library</p>
-              <p className="text-lg font-black text-gray-900">{orderCount}</p>
-            </div>
+      {/* Menu Items */}
+      <div className="mt-6 space-y-2">
+        {/* My Downloads */}
+        <Link href="/profile/downloads" className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition">
+          <div className="flex items-center gap-3">
+            <Download className="w-5 h-5 text-green-600" />
+            <span className="font-medium">My Downloads</span>
           </div>
-          <div className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center shrink-0">
-              <Clock className="w-5 h-5 text-orange-500" />
-            </div>
-            <div>
-              <p className="text-[10px] text-gray-500 font-bold uppercase">Orders</p>
-              <p className="text-lg font-black text-gray-900">{orderCount}</p>
-            </div>
+          <ChevronRight className="w-5 h-5 text-gray-400" />
+        </Link>
+
+        {/* Wishlist */}
+        <Link href="/profile/wishlist" className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition">
+          <div className="flex items-center gap-3">
+            <Heart className="w-5 h-5 text-red-500" />
+            <span className="font-medium">Wishlist</span>
           </div>
-        </div>
+          <ChevronRight className="w-5 h-5 text-gray-400" />
+        </Link>
 
-        {/* Menu Items */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-          <Link href="/profile/downloads" className="flex items-center justify-between p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
-                <Download className="w-5 h-5 text-green-600" />
-              </div>
-              <span className="font-medium text-gray-900">My Library & Downloads</span>
-            </div>
-            <ChevronRight className="w-5 h-5 text-gray-300" />
-          </Link>
+        {/* Order History */}
+        <Link href="/profile/orders" className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition">
+          <div className="flex items-center gap-3">
+            <Clock className="w-5 h-5 text-blue-600" />
+            <span className="font-medium">Order History</span>
+          </div>
+          <ChevronRight className="w-5 h-5 text-gray-400" />
+        </Link>
 
-          <button className="w-full flex items-center justify-between p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
-                <Heart className="w-5 h-5 text-red-500" />
-              </div>
-              <span className="font-medium text-gray-900">Saved & Wishlist</span>
-            </div>
-            <ChevronRight className="w-5 h-5 text-gray-300" />
-          </button>
+        <Link href="/profile/transactions" className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition">
+          <div className="flex items-center gap-3">
+            <Wallet className="w-5 h-5 text-emerald-600" />
+            <span className="font-medium">Transactions</span>
+          </div>
+          <ChevronRight className="w-5 h-5 text-gray-400" />
+        </Link>
 
-          <button className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-                <ShieldCheck className="w-5 h-5 text-blue-500" />
-              </div>
-              <span className="font-medium text-gray-900">Account Security</span>
-            </div>
-            <ChevronRight className="w-5 h-5 text-gray-300" />
-          </button>
-        </div>
+        {/* Verified Purchases */}
+        <Link href="/profile/purchases" className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition">
+          <div className="flex items-center gap-3">
+            <ShieldCheck className="w-5 h-5 text-green-600" />
+            <span className="font-medium">Verified Purchases</span>
+          </div>
+          <ChevronRight className="w-5 h-5 text-gray-400" />
+        </Link>
 
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-          <button className="w-full flex items-center justify-between p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center">
-                <HelpCircle className="w-5 h-5 text-gray-500" />
-              </div>
-              <span className="font-medium text-gray-900">Help & Support</span>
-            </div>
-            <ChevronRight className="w-5 h-5 text-gray-300" />
-          </button>
+        {/* Security Settings */}
+        <Link href="/profile/security" className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition">
+          <div className="flex items-center gap-3">
+            <Lock className="w-5 h-5 text-purple-600" />
+            <span className="font-medium">Security Settings</span>
+          </div>
+          <ChevronRight className="w-5 h-5 text-gray-400" />
+        </Link>
 
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-between p-4 hover:bg-red-50 transition-colors group"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-red-50 group-hover:bg-red-100 flex items-center justify-center transition-colors">
-                <LogOut className="w-5 h-5 text-red-600" />
-              </div>
-              <span className="font-medium text-red-600">Logout</span>
-            </div>
-          </button>
-        </div>
+        {/* Help & Support */}
+        <Link href="/support" className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition">
+          <div className="flex items-center gap-3">
+            <HelpCircle className="w-5 h-5 text-orange-600" />
+            <span className="font-medium">Help & Support</span>
+          </div>
+          <ChevronRight className="w-5 h-5 text-gray-400" />
+        </Link>
 
+        {/* Logout */}
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center justify-between p-4 bg-white hover:bg-red-50 transition text-red-600 font-medium"
+        >
+          <div className="flex items-center gap-3">
+            <LogOut className="w-5 h-5" />
+            <span>Logout</span>
+          </div>
+          <ChevronRight className="w-5 h-5 text-gray-400" />
+        </button>
       </div>
     </div>
   );
 }
+

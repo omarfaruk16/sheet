@@ -149,20 +149,24 @@ router.post('/', authMiddleware_1.protect, authMiddleware_1.admin, async (req, r
         else {
             delete data.subcategory;
         }
-        if (data.tags) {
+        if (data.tags && Array.isArray(data.tags)) {
             data.tags = { connect: data.tags.map((id) => ({ id })) };
         }
         else {
             delete data.tags;
         }
-        if (data.chapters) {
+        if (data.chapters && Array.isArray(data.chapters)) {
             data.chapters = { create: data.chapters };
+        }
+        else {
+            delete data.chapters;
         }
         const createdProduct = await prisma_1.prisma.product.create({ data });
         res.status(201).json(createdProduct);
     }
     catch (error) {
-        res.status(500).json({ message: 'Error creating product', error });
+        console.error('Product creation error:', error);
+        res.status(500).json({ message: 'Error creating product', error: error.message || String(error) });
     }
 });
 // @desc    Update a product
@@ -179,12 +183,18 @@ router.put('/:id', authMiddleware_1.protect, authMiddleware_1.admin, async (req,
             data.subcategoryId = data.subcategory;
             delete data.subcategory;
         }
-        if (data.tags) {
+        if (data.tags && Array.isArray(data.tags)) {
             data.tags = { set: data.tags.map((id) => ({ id })) };
         }
-        if (data.chapters) {
+        else {
+            delete data.tags;
+        }
+        if (data.chapters && Array.isArray(data.chapters)) {
             await prisma_1.prisma.chapter.deleteMany({ where: { productId: req.params.id } });
             data.chapters = { create: data.chapters };
+        }
+        else {
+            delete data.chapters;
         }
         const product = await prisma_1.prisma.product.update({
             where: { id: req.params.id },
@@ -202,11 +212,18 @@ router.put('/:id', authMiddleware_1.protect, authMiddleware_1.admin, async (req,
 // @access  Private/Admin
 router.delete('/:id', authMiddleware_1.protect, authMiddleware_1.admin, async (req, res) => {
     try {
-        const product = await prisma_1.prisma.product.delete({ where: { id: req.params.id } });
-        res.json({ message: 'Product removed' });
+        const productId = req.params.id;
+        // Force delete associated order items to bypass Prisma's relational constraint (P2003)
+        await prisma_1.prisma.orderItem.deleteMany({ where: { productId } });
+        // Delete the product itself
+        await prisma_1.prisma.product.delete({ where: { id: productId } });
+        res.json({ message: 'Product removed successfully' });
     }
     catch (error) {
-        res.status(500).json({ message: 'Error deleting product', error });
+        if (error.code === 'P2003') {
+            return res.status(400).json({ message: 'Cannot delete product due to database constraints.' });
+        }
+        res.status(500).json({ message: 'Error deleting product', error: error.message || String(error) });
     }
 });
 exports.default = router;

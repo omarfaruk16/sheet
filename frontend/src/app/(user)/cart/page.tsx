@@ -1,9 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft, Trash2, ShieldCheck, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Trash2, ShieldCheck, ChevronRight, ShoppingCart } from 'lucide-react';
+
+const fallbackCoverImage = 'https://images.unsplash.com/photo-1544716278-e513176f20b5?w=400&q=80';
+
+const getImageUrl = (url?: string) => {
+  if (!url) return fallbackCoverImage;
+  if (url.startsWith('http') || url.startsWith('data:')) return url;
+  const base = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace('/api', '');
+  return `${base}${url}`;
+};
 
 export default function CartPage() {
   const [items, setItems] = useState<any[]>([]);
@@ -71,7 +79,15 @@ export default function CartPage() {
               <Trash2 className="w-5 h-5" />
             </button>
             <div className="w-20 h-28 shrink-0 rounded-2xl overflow-hidden relative border border-gray-50">
-              <Image src={item.cover} alt="cover" fill className="object-cover" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={getImageUrl(item.cover)}
+                alt="cover"
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.src = fallbackCoverImage;
+                }}
+              />
             </div>
             <div className="flex flex-col py-1">
               <h3 className="font-bold text-gray-900 text-sm mb-1 pr-6 leading-tight">{item.productTitle}</h3>
@@ -134,5 +150,3 @@ export default function CartPage() {
   );
 }
 
-// Needed to avoid error on empty cart rendering logic above
-import { ShoppingCart } from 'lucide-react';

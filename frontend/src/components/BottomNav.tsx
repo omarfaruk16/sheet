@@ -8,6 +8,9 @@ import { twMerge } from 'tailwind-merge';
 import { useState, useEffect } from 'react';
 import { auth } from '@/lib/firebase';
 import axios from 'axios';
+import { getLocalSession } from '@/lib/userSession';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -28,25 +31,35 @@ export default function BottomNav() {
     updateCartCount();
     const cartInterval = setInterval(updateCartCount, 1000);
 
+    const loadLibraryCount = async (token: string) => {
+      try {
+        const res = await axios.get(API_URL + '/orders/my', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (Array.isArray(res.data)) {
+          let count = 0;
+          res.data.forEach((order: any) => {
+            if (order.status === 'completed') {
+              count += order.items.length;
+            }
+          });
+          setLibraryCount(count);
+        }
+      } catch {
+        setLibraryCount(0);
+      }
+    };
+
+    const localSession = getLocalSession();
+    if (localSession?.token) {
+      loadLibraryCount(localSession.token);
+    }
+
     // Fetch library count
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
-        try {
-          const token = await user.getIdToken();
-          const res = await axios.get(
-            (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api') + '/orders/my',
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-          if (Array.isArray(res.data)) {
-            let count = 0;
-            res.data.forEach((order: any) => {
-              if (order.status === 'completed') {
-                count += order.items.length;
-              }
-            });
-            setLibraryCount(count);
-          }
-        } catch (e) { }
+        const token = await user.getIdToken();
+        await loadLibraryCount(token);
       }
     });
 

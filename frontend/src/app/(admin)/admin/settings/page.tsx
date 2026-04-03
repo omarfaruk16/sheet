@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { adminAxios } from '@/lib/adminAuth';
 import toast from 'react-hot-toast';
-import { Save } from 'lucide-react';
+import { Save, Lock, ChevronRight } from 'lucide-react';
 
 export default function AdminSettings() {
   const [loading, setLoading] = useState(false);
@@ -52,6 +53,22 @@ export default function AdminSettings() {
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+        <h3 className="text-lg font-bold text-gray-900 mb-4">Account Security</h3>
+        <Link href="/admin/settings/password" className="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center">
+              <Lock className="w-5 h-5 text-red-600" />
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900">Change Password</p>
+              <p className="text-xs text-gray-500">Update your admin account password</p>
+            </div>
+          </div>
+          <ChevronRight className="w-5 h-5 text-gray-400" />
+        </Link>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
         <form onSubmit={handleSubmit} className="space-y-6">
           
           <div>
@@ -88,7 +105,7 @@ export default function AdminSettings() {
               disabled={loading || saving}
               className="px-6 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-colors flex items-center gap-2 disabled:opacity-60"
             >
-              {saving ? 'Saving...' : <><Save className="w-5 h-5"/> Save Settings</>}
+              {saving ? 'Saving...' : (<><Save className="w-5 h-5"/> Save Settings</>)}
             </button>
           </div>
         </form>

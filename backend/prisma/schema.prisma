@@ -1,9 +1,10 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -18,148 +19,157 @@ model AdminUser {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  uid       String   @unique // Firebase UID
-  name      String
-  email     String   @unique
-  phone     String?
-  address   String?  @db.Text
-  role      String   @default("user")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  orders    Order[]
+  id           String   @id @default(cuid())
+  uid          String   @unique // Firebase UID
+  name         String
+  email        String   @unique
+  phone        String?
+  address      String?  @db.Text
+  role         String   @default("user")
+  authProvider String   @default("firebase") // firebase, email, etc.
+  localPasswordHash String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  orders Order[]
 }
 
 model Category {
-  id            String   @id @default(cuid())
-  name          String
-  slug          String   @unique
-  icon          String?
-  
+  id   String  @id @default(cuid())
+  name String
+  slug String  @unique
+  icon String?
+
   subcategories SubCategory[]
   products      Product[]
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model SubCategory {
-  id               String   @id @default(cuid())
-  name             String
-  slug             String   @unique
-  
+  id   String @id @default(cuid())
+  name String
+  slug String @unique
+
   parentCategory   Category @relation(fields: [parentCategoryId], references: [id])
   parentCategoryId String
-  
-  products         Product[]
-  
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+
+  products Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Tag {
-  id        String   @id @default(cuid())
-  name      String
-  slug      String   @unique
-  
-  products  Product[]
-  
+  id   String @id @default(cuid())
+  name String
+  slug String @unique
+
+  products Product[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Product {
-  id               String   @id @default(cuid())
-  title            String
-  uniqueId         String   @unique
-  coverImage       String
-  description      String   @db.Text
-  regularPrice     Float
-  discountPrice    Float?
-  demoPdfUrl       String?
-  
-  category         Category @relation(fields: [categoryId], references: [id])
-  categoryId       String
-  
-  subcategory      SubCategory? @relation(fields: [subcategoryId], references: [id])
-  subcategoryId    String?
-  
-  tags             Tag[]
-  
+  id            String  @id @default(cuid())
+  title         String
+  uniqueId      String  @unique
+  coverImage    String
+  description   String  @db.Text
+  regularPrice  Float
+  discountPrice Float?
+  demoPdfUrl    String?
+
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId String
+
+  subcategory   SubCategory? @relation(fields: [subcategoryId], references: [id])
+  subcategoryId String?
+
+  tags Tag[]
+
   allChaptersPrice Float
-  
-  chapters         Chapter[]
-  orders           OrderItem[]
-  
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+
+  chapters Chapter[]
+  orders   OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Chapter {
-  id        String   @id @default(cuid())
-  name      String
-  pdfUrl    String   @db.Text
-  price     Float
-  order     Int      @default(0)
-  
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  name   String
+  pdfUrl String @db.Text
+  price  Float
+  order  Int    @default(0)
+
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId String
 }
 
 model Order {
-  id                String   @id @default(cuid())
-  orderId           String   @unique
-  
-  userId            String
-  user              User     @relation(fields: [userId], references: [uid])
-  
+  id      String @id @default(cuid())
+  orderId String @unique
+
+  userId String
+  user   User   @relation(fields: [userId], references: [uid])
+
   subtotal          Float
-  serviceFee        Float    @default(0)
+  serviceFee        Float     @default(0)
   totalAmount       Float
-  status            String   @default("pending")
-  fulfillmentMethod String   @default("digital")
+  status            String    @default("pending")
+  fulfillmentMethod String    @default("digital")
   paymentMethod     String?
   transactionId     String?
-  shippingAddress   String?  @db.Text
+  paymentStatus     String    @default("unpaid")
+  paymentGateway    String?
+  sslSessionKey     String?
+  sslValId          String?
+  paidAt            DateTime?
+  currency          String    @default("BDT")
+  gatewayResponse   Json?
+  shippingAddress   String?   @db.Text
   customerName      String
   customerEmail     String
   customerPhone     String?
-  
-  items             OrderItem[]
-  
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+
+  items OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model OrderItem {
-  id              String   @id @default(cuid())
-  
-  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  orderId         String
-  
-  product         Product  @relation(fields: [productId], references: [id])
-  productId       String
-  productTitle    String
-  
-  isAllChapters   Boolean  @default(false)
-  price           Float
-  
+  id String @id @default(cuid())
+
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId String
+
+  product      Product @relation(fields: [productId], references: [id])
+  productId    String
+  productTitle String
+
+  isAllChapters Boolean @default(false)
+  price         Float
+
   headerLeftText  String?
   headerRightText String?
   watermarkText   String?
   coverPageText   String?
-  downloadUrl     String?  @db.Text
-  
-  chaptersItem    OrderChapter[]
+  downloadUrl     String? @db.Text
+
+  chaptersItem OrderChapter[]
 }
 
 model OrderChapter {
-  id          String   @id @default(cuid())
-  name        String
-  pdfUrl      String   @db.Text
-  price       Float
-  
+  id     String @id @default(cuid())
+  name   String
+  pdfUrl String @db.Text
+  price  Float
+
   orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
   orderItemId String
 }

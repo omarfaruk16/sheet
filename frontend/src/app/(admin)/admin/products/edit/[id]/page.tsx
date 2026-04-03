@@ -29,6 +29,7 @@ export default function EditProduct() {
   const [categories, setCategories] = useState<any[]>([]);
   const coverImageInputRef = useRef<HTMLInputElement>(null);
   const demoPdfInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const [coverImageUploading, setCoverImageUploading] = useState(false);
   const [demoPdfUploading, setDemoPdfUploading] = useState(false);
 

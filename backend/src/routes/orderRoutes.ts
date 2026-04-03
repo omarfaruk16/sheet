@@ -6,6 +6,27 @@ import { generateCustomPdf } from '../utils/pdfGenerator';
 
 const router = express.Router();
 
+const toTransactionView = (order: any) => ({
+  id: order.id,
+  orderId: order.orderId,
+  transactionId: order.transactionId,
+  paymentStatus: order.paymentStatus,
+  status: order.status,
+  subtotal: order.subtotal,
+  serviceFee: order.serviceFee,
+  totalAmount: order.totalAmount,
+  amount: order.totalAmount,
+  currency: order.currency,
+  paymentMethod: order.paymentMethod,
+  paymentGateway: order.paymentGateway,
+  customerName: order.customerName,
+  customerEmail: order.customerEmail,
+  items: order.items,
+  createdAt: order.createdAt,
+  paidAt: order.paidAt,
+  gatewayResponse: order.gatewayResponse,
+});
+
 // @desc    Create new order
 // @route   POST /api/orders
 // @access  Private
@@ -33,6 +54,8 @@ router.post('/', protect, async (req, res) => {
         totalAmount: req.body.totalAmount,
         fulfillmentMethod: req.body.fulfillmentMethod || 'digital',
         paymentMethod: req.body.paymentMethod,
+        paymentGateway: req.body.paymentGateway || 'manual',
+        paymentStatus: req.body.paymentStatus || 'pending_verification',
         transactionId: req.body.transactionId,
         shippingAddress: req.body.shippingAddress,
         customerName: req.body.customerName,
@@ -67,6 +90,35 @@ router.post('/', protect, async (req, res) => {
   }
 });
 
+// @desc    Get logged in user downloadable library (paid/completed orders only)
+// @route   GET /api/orders/my/downloads
+// @access  Private
+router.get('/my/downloads', protect, async (req, res) => {
+  try {
+    const rawOrders = await prisma.order.findMany({
+      where: {
+        userId: req.user?.uid,
+        OR: [{ paymentStatus: 'paid' }, { status: 'completed' }],
+      },
+      orderBy: { createdAt: 'desc' },
+      include: { items: { include: { product: true, chaptersItem: true } } },
+    });
+
+    const orders = rawOrders
+      .map((o: any) => ({
+        ...o,
+        items: o.items
+          .map((i: any) => ({ ...i, chapters: i.chaptersItem, productId: i.product || i.productId }))
+          .filter((i: any) => Boolean(i.downloadUrl) || (Array.isArray(i.chapters) && i.chapters.some((ch: any) => Boolean(ch?.pdfUrl)))),
+      }))
+      .filter((o: any) => o.items.length > 0);
+
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching downloadable library', error });
+  }
+});
+
 // @desc    Get logged in user orders
 // @route   GET /api/orders/my
 // @access  Private
@@ -87,6 +139,27 @@ router.get('/my', protect, async (req, res) => {
   }
 });
 
+// @desc    Get logged in user transactions
+// @route   GET /api/orders/my/transactions
+// @access  Private
+router.get('/my/transactions', protect, async (req, res) => {
+  try {
+    const orders = await prisma.order.findMany({
+      where: { userId: req.user?.uid },
+      orderBy: { createdAt: 'desc' },
+      include: { items: true },
+    });
+
+    res.json(
+      orders
+        .filter((order) => Boolean(order.transactionId || order.paymentGateway))
+        .map(toTransactionView)
+    );
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching transactions', error });
+  }
+});
+
 // @desc    Get all orders
 // @route   GET /api/orders
 // @access  Private/Admin
@@ -103,6 +176,25 @@ router.get('/', protect, admin, async (req, res) => {
     res.json(orders);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching all orders', error });
+  }
+});
+
+// @desc    Get all transactions
+// @route   GET /api/orders/transactions
+// @access  Private/Admin
+router.get('/transactions', protect, admin, async (req, res) => {
+  try {
+    const orders = await prisma.order.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+
+    res.json(
+      orders
+        .filter((order) => Boolean(order.transactionId || order.paymentGateway))
+        .map(toTransactionView)
+    );
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching transactions', error });
   }
 });
 

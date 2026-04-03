@@ -11,9 +11,15 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
-// Initialize Firebase only once
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-export const auth = getAuth(app);
+// Avoid initializing Firebase during server-side prerender/build.
+const canInitFirebase =
+  typeof window !== 'undefined' &&
+  Boolean(firebaseConfig.apiKey) &&
+  Boolean(firebaseConfig.authDomain) &&
+  Boolean(firebaseConfig.projectId);
+
+const app = canInitFirebase ? (!getApps().length ? initializeApp(firebaseConfig) : getApp()) : null;
+export const auth = app ? getAuth(app) : ({} as ReturnType<typeof getAuth>);
 export const googleProvider = new GoogleAuthProvider();
 
 export default app;

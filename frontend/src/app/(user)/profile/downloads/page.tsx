@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft, Search, DownloadCloud, Lock, CheckCircle2 } from 'lucide-react';
 import axios from 'axios';
 import { auth } from '@/lib/firebase';
+import { getLocalSession } from '@/lib/userSession';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 const getImageUrl = (url?: string) => {
   if (!url) return 'https://images.unsplash.com/photo-1544716278-e513176f20b5?w=400&q=80';
@@ -34,32 +36,63 @@ export default function DownloadsLibrary() {
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
 
+    const mapOrdersToLibrary = (orders: any[]) => {
+      const items: any[] = [];
+      orders.forEach((order: any) => {
+        const isSuccessful = order.paymentStatus === 'paid' || order.status === 'completed';
+        if (!isSuccessful) return;
+
+        order.items.forEach((item: any) => {
+          const chapters = Array.isArray(item.chapters) ? item.chapters.filter((ch: any) => Boolean(ch?.pdfUrl)) : [];
+          const hasDownload = Boolean(item.downloadUrl) || chapters.length > 0;
+          if (!hasDownload) return;
+
+          items.push({
+            id: item.id || item._id,
+            title: item.productTitle || 'Generated PDF',
+            type: item.isAllChapters ? 'Full Book' : 'Selected Chapters',
+            cover: item.productId?.coverImage || 'https://images.unsplash.com/photo-1544716278-e513176f20b5?w=400&q=80',
+            status: order.status,
+            paymentStatus: order.paymentStatus,
+            date: new Date(order.createdAt).toLocaleDateString(),
+            url: item.downloadUrl ? `${API_URL.replace('/api', '')}${item.downloadUrl}` : null,
+            chapters,
+          });
+        });
+      });
+      setLibrary(items);
+    };
+
+    const localSession = getLocalSession();
+    if (localSession?.token) {
+      const loadLocalOrders = async () => {
+        try {
+          const res = await axios.get(API_URL + '/orders/my/downloads', {
+            headers: { Authorization: `Bearer ${localSession.token}` },
+          });
+          mapOrdersToLibrary(res.data || []);
+        } catch {
+          setLibrary([]);
+        }
+      };
+
+      loadLocalOrders();
+      intervalId = setInterval(loadLocalOrders, 3000);
+
+      return () => {
+        if (intervalId) clearInterval(intervalId);
+      };
+    }
+
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
         const loadOrders = async () => {
           try {
             const token = await user.getIdToken();
-            const res = await axios.get(process.env.NEXT_PUBLIC_API_URL + '/orders/my', {
+            const res = await axios.get(API_URL + '/orders/my/downloads', {
               headers: { Authorization: `Bearer ${token}` }
             });
-            
-            // Flatten order items into a library list
-            const items: any[] = [];
-            res.data.forEach((order: any) => {
-              order.items.forEach((item: any) => {
-                items.push({
-                  id: item.id || item._id, // Prisma returns id, fallback to _id
-                  title: item.productTitle || 'Generated PDF',
-                  type: item.isAllChapters ? 'Full Book' : 'Selected Chapters',
-                  cover: item.productId?.coverImage || 'https://images.unsplash.com/photo-1544716278-e513176f20b5?w=400&q=80',
-                  status: order.status,
-                  date: new Date(order.createdAt).toLocaleDateString(),
-                  url: item.downloadUrl ? `${(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace('/api', '')}${item.downloadUrl}` : null,
-                  chapters: item.chapters || []
-                });
-              });
-            });
-            setLibrary(items);
+            mapOrdersToLibrary(res.data || []);
           } catch(e) {}
         };
 
@@ -120,7 +153,15 @@ export default function DownloadsLibrary() {
                 >
                   <div className="p-4 flex gap-4">
                     <div className="w-20 h-28 shrink-0 rounded-2xl overflow-hidden relative border border-gray-50">
-                      <Image src={getImageUrl(item.cover)} alt="cover" fill className="object-cover" />
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={getImageUrl(item.cover)}
+                        alt="cover"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = 'https://images.unsplash.com/photo-1544716278-e513176f20b5?w=400&q=80';
+                        }}
+                      />
                       {item.status === 'generating' && (
                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[1px]">
                           <Lock className="w-6 h-6 text-white opacity-70" />
@@ -163,7 +204,7 @@ export default function DownloadsLibrary() {
                                 <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
                                 <span className="leading-snug font-medium">{ch.name}</span>
                               </div>
-                              {item.status === 'completed' && ch.pdfUrl ? (
+                              {(item.status === 'completed' || item.paymentStatus === 'paid') && ch.pdfUrl ? (
                                 <a 
                                   href={getPdfUrl(ch.pdfUrl)}
                                   target="_blank" 
@@ -172,7 +213,7 @@ export default function DownloadsLibrary() {
                                 >
                                   <DownloadCloud className="w-4 h-4" /> Download
                                 </a>
-                              ) : item.status !== 'completed' ? (
+                              ) : item.status !== 'completed' && item.paymentStatus !== 'paid' ? (
                                 <span className="text-orange-500 bg-orange-50 px-3 py-1.5 rounded-lg text-xs font-bold border border-orange-100 whitespace-nowrap">
                                   Pending Admin Approval
                                 </span>

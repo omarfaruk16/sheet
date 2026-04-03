@@ -80,20 +80,24 @@ export default function AdminOrders() {
               <th className="px-6 py-4">Order ID &amp; Date</th>
               <th className="px-6 py-4">Customer</th>
               <th className="px-6 py-4">Amount</th>
-              <th className="px-6 py-4 border-r">Status</th>
+              <th className="px-6 py-4">Items</th>
+              <th className="px-6 py-4">Payment Status</th>
+              <th className="px-6 py-4">Gateway</th>
+              <th className="px-6 py-4">Fulfillment</th>
+              <th className="px-6 py-4 border-r">Order Status</th>
               <th className="px-6 py-4 text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                <td colSpan={9} className="px-6 py-8 text-center text-gray-500">
                   Loading orders...
                 </td>
               </tr>
             ) : filteredOrders.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-8 text-center text-gray-400">
+                <td colSpan={9} className="px-6 py-8 text-center text-gray-400">
                   No orders found.
                 </td>
               </tr>
@@ -101,17 +105,40 @@ export default function AdminOrders() {
               filteredOrders.map((o: any) => (
                 <tr key={o._id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
                   <td className="px-6 py-4">
-                    <div className="font-mono text-gray-900 font-medium">{o.orderId}</div>
+                    <div className="font-mono text-gray-900 font-medium text-sm">{o.orderId}</div>
                     <div className="text-xs text-gray-500 mt-1">
                       {new Date(o.createdAt).toLocaleDateString()}
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="font-medium text-gray-900">{o.customerName}</div>
+                    <div className="font-medium text-gray-900 text-sm">{o.customerName}</div>
                     <div className="text-xs text-gray-500">{o.customerEmail}</div>
+                    {o.customerPhone && <div className="text-xs text-gray-500">{o.customerPhone}</div>}
                   </td>
-                  <td className="px-6 py-4 font-medium text-gray-900">
+                  <td className="px-6 py-4 font-bold text-gray-900">
                     ৳{Number(o.totalAmount).toFixed(2)}
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <span className="inline-block px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-bold">
+                      {o.items?.length || 0}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    {o.paymentStatus === 'paid' ? (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        ✓ Paid
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                        ⏱ Unpaid
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-xs text-gray-600">
+                    {o.paymentGateway ? o.paymentGateway.charAt(0).toUpperCase() + o.paymentGateway.slice(1) : '-'}
+                  </td>
+                  <td className="px-6 py-4 text-xs text-gray-600 capitalize">
+                    {o.fulfillmentMethod || 'Digital'}
                   </td>
                   <td className="px-6 py-4 border-r">
                     {o.status === 'completed' && (
@@ -150,9 +177,9 @@ export default function AdminOrders() {
                         <button
                           onClick={() => rejectOrder(o._id)}
                           className="text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors border border-transparent hover:border-red-100"
-                          title="Reject Order"
+                          title="Cancel Order"
                         >
-                          <XCircle className="w-4 h-4" />
+                          <X className="w-4 h-4" />
                         </button>
                       </>
                     )}

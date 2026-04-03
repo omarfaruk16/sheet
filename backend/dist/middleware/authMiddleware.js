@@ -32,6 +32,14 @@ const protect = async (req, res, next) => {
                         return;
                     }
                 }
+                if (decoded.authType === 'local' && decoded.uid) {
+                    const user = await prisma_1.prisma.user.findUnique({ where: { uid: decoded.uid } });
+                    if (user) {
+                        req.user = user;
+                        next();
+                        return;
+                    }
+                }
             }
             catch {
                 // Not an admin JWT – fall through to Firebase decode
@@ -66,6 +74,7 @@ const protect = async (req, res, next) => {
                     uid: uid,
                     email: decodedToken.email || `${uid}@noemail.com`,
                     name: decodedToken.name || decodedToken.email?.split('@')[0] || 'User',
+                    authProvider: 'firebase',
                     role: desiredRole,
                 }
             });

@@ -5,10 +5,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Layers, ShoppingCart, User, BookOpen } from 'lucide-react';
 import { cn } from './BottomNav';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { getLocalSession } from '@/lib/userSession';
 
 export default function HeaderMenu() {
   const pathname = usePathname();
   const [cartCount, setCartCount] = useState(0);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     const updateCount = () => {
@@ -25,6 +29,33 @@ export default function HeaderMenu() {
     // Poll for changes across tabs or in-page actions
     const interval = setInterval(updateCount, 1000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const syncAuthState = () => {
+      setIsAuthenticated(Boolean(auth.currentUser) || Boolean(getLocalSession()));
+    };
+
+    syncAuthState();
+
+    const unsubscribe = onAuthStateChanged(auth, () => {
+      syncAuthState();
+    });
+
+    const storageListener = (event: StorageEvent) => {
+      if (event.key === 'leafsheets_user_session') {
+        syncAuthState();
+      }
+    };
+
+    window.addEventListener('storage', storageListener);
+    const interval = setInterval(syncAuthState, 1000);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener('storage', storageListener);
+      clearInterval(interval);
+    };
   }, []);
 
   // Hide on admin routes
@@ -71,10 +102,27 @@ export default function HeaderMenu() {
               </span>
             )}
           </Link>
-          <Link href="/profile" className="flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-green-600 transition-colors">
-            <User className="w-5 h-5" />
-            Profile
-          </Link>
+          {isAuthenticated ? (
+            <Link href="/profile" className="flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-green-600 transition-colors">
+              <User className="w-5 h-5" />
+              Profile
+            </Link>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link
+                href="/login"
+                className="px-3 py-1.5 rounded-lg text-sm font-semibold text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+              >
+                Login
+              </Link>
+              <Link
+                href="/register"
+                className="px-3 py-1.5 rounded-lg text-sm font-semibold text-white bg-green-600 hover:bg-green-500 transition-colors"
+              >
+                Signup
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </header>

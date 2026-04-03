@@ -31,13 +31,27 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
     const secret = process.env.ADMIN_JWT_SECRET;
     if (secret) {
       try {
-        const decoded = jwt.verify(token, secret) as { id: string; role: string };
+        const decoded = jwt.verify(token, secret) as {
+          id: string;
+          uid?: string;
+          role: string;
+          authType?: string;
+        };
         if (decoded.role === 'admin') {
           const adminUser = await prisma.adminUser.findUnique({ where: { id: decoded.id } });
           if (adminUser) {
             req.adminUser = adminUser;
             // Attach a compatible req.user so `admin` middleware works
             req.user = { role: 'admin' } as any;
+            next();
+            return;
+          }
+        }
+
+        if (decoded.authType === 'local' && decoded.uid) {
+          const user = await prisma.user.findUnique({ where: { uid: decoded.uid } });
+          if (user) {
+            req.user = user;
             next();
             return;
           }
@@ -82,6 +96,7 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
           uid: uid,
           email: decodedToken.email || `${uid}@noemail.com`,
           name: decodedToken.name || decodedToken.email?.split('@')[0] || 'User',
+          authProvider: 'firebase',
           role: desiredRole,
         }
       });

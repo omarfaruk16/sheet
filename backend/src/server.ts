@@ -14,19 +14,60 @@ import productRoutes from './routes/productRoutes';
 import orderRoutes from './routes/orderRoutes';
 import userRoutes from './routes/userRoutes';
 import adminAuthRoutes from './routes/adminAuthRoutes';
+import adminPasswordRoutes from './routes/adminPasswordRoutes';
 import settingsRoutes from './routes/settingsRoutes';
+import paymentRoutes from './routes/paymentRoutes';
+const envCandidates = [
+  path.resolve(process.cwd(), '../.env'),
+  path.resolve(process.cwd(), '.env'),
+];
 
-dotenv.config();
+for (const envPath of envCandidates) {
+  if (fs.existsSync(envPath)) {
+    dotenv.config({ path: envPath });
+    break;
+  }
+}
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+const defaultOrigins = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'http://192.168.0.106:3000',
+];
+
+const configuredOrigins = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const allowedOrigins = new Set([...defaultOrigins, ...configuredOrigins]);
+
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+  origin: (origin, callback) => {
+    // Allow non-browser and file-origin requests (payment gateway redirects can send `Origin: null`).
+    if (!origin || origin === 'null') return callback(null, true);
+    if (allowedOrigins.has(origin)) return callback(null, true);
+
+    if (origin.includes('sslcommerz.com')) {
+      return callback(null, true);
+    }
+
+    // Allow local-network frontend origins in dev without redeploying backend.
+    if (process.env.NODE_ENV !== 'production' && /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.[\d.]+|10\.[\d.]+):3000$/.test(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error('Origin not allowed'));
+  },
   credentials: true,
 }));
+
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Ensure downloads directory exists
 const downloadsDir = path.join(__dirname, '../public/downloads');
@@ -78,8 +119,10 @@ app.use('/api/subcategories', subCategoryRoutes);
 app.use('/api/tags', tagRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/payments', paymentRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminAuthRoutes);
+app.use('/api/admin', adminPasswordRoutes);
 app.use('/api/settings', settingsRoutes);
 
 // Health check
@@ -90,5 +133,8 @@ app.get('/', (req, res) => {
 app.listen(PORT, async () => {
   // Seed default admin user if not present
   await seedAdminUser();
+  // Sync admin credentials with env values
+  const { syncAdminUser } = await import('./adminSeeder');
+  await syncAdminUser();
   console.log(`🚀 Server is running on http://localhost:${PORT}`);
 });

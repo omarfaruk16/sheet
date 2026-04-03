@@ -1,19 +1,79 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Mail, Lock, AlertCircle, Loader2 } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import toast from 'react-hot-toast';
+import { clearLocalSession, setLocalSession, type LocalSessionUser } from '@/lib/userSession';
 
-export default function LoginPage() {
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
+type ErrorLike = {
+  code?: string;
+  message?: string;
+};
+
+type LocalAuthSuccess = {
+  token: string;
+  user: {
+    id?: string;
+    uid?: string;
+    name?: string;
+    email?: string;
+    role?: string;
+    authProvider?: 'local' | 'firebase';
+  };
+};
+
+const toLocalSessionUser = (user: LocalAuthSuccess['user']): LocalSessionUser | null => {
+  if (!user.uid) return null;
+  return {
+    id: user.id,
+    uid: user.uid,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    authProvider: 'local',
+  };
+};
+
+const parseError = (error: unknown): ErrorLike => {
+  if (typeof error === 'object' && error !== null) {
+    const candidate = error as Record<string, unknown>;
+    return {
+      code: typeof candidate.code === 'string' ? candidate.code : undefined,
+      message: typeof candidate.message === 'string' ? candidate.message : undefined,
+    };
+  }
+  return {};
+};
+
+const getErrorMessage = (error: unknown, fallback: string) => parseError(error).message || fallback;
+
+const shouldUseLocalFallback = (error: unknown) => {
+  const err = parseError(error);
+  const code = (err?.code || '').toLowerCase();
+  const message = (err?.message || '').toLowerCase();
+  return (
+    code.includes('api-key-not-valid') ||
+    code.includes('invalid-api-key') ||
+    message.includes('api-key-not-valid') ||
+    message.includes('invalid api key')
+  );
+};
+
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const redirectTo = searchParams.get('redirect') || '/profile';
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,20 +85,64 @@ export default function LoginPage() {
       const userCred = await signInWithEmailAndPassword(auth, email, password);
       // Sync with backend
       const token = await userCred.user.getIdToken();
-      await fetch(process.env.NEXT_PUBLIC_API_URL + '/auth/sync', {
+      await fetch(API_URL + '/auth/sync', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ email: userCred.user.email })
+        body: JSON.stringify({
+          email: userCred.user.email,
+          name: userCred.user.displayName,
+        })
       });
 
+      clearLocalSession();
       toast.success('Login Successful!');
-      router.push('/profile'); // Redirect after login
-    } catch (err: any) {
+      router.push(redirectTo);
+    } catch (err: unknown) {
+      if (shouldUseLocalFallback(err)) {
+        try {
+          const res = await fetch(API_URL + '/auth/login-local', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+          });
+
+          const data = (await res.json()) as Partial<LocalAuthSuccess> & { message?: string };
+          if (!res.ok) {
+            setError(data?.message || 'Local login failed');
+            toast.error('Login Failed');
+            return;
+          }
+
+          if (!data.token || !data.user) {
+            setError('Local login failed');
+            toast.error('Login Failed');
+            return;
+          }
+
+          const localUser = toLocalSessionUser(data.user);
+          if (!localUser) {
+            setError('Local login failed');
+            toast.error('Login Failed');
+            return;
+          }
+
+          setLocalSession({ token: data.token, user: localUser });
+          toast.success('Login Successful!');
+          router.push(redirectTo);
+          return;
+        } catch (fallbackError: unknown) {
+          console.error(fallbackError);
+          setError(getErrorMessage(fallbackError, 'Failed to login'));
+          toast.error('Login Failed');
+          return;
+        }
+      }
+
       console.error(err);
-      setError(err.message || 'Failed to login');
+      setError(getErrorMessage(err, 'Failed to login'));
       toast.error('Login Failed');
     } finally {
       setLoading(false);
@@ -53,7 +157,7 @@ export default function LoginPage() {
       const userCred = await signInWithPopup(auth, provider);
       // Sync with backend
       const token = await userCred.user.getIdToken();
-      await fetch(process.env.NEXT_PUBLIC_API_URL + '/auth/sync', {
+      await fetch(API_URL + '/auth/sync', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -65,11 +169,12 @@ export default function LoginPage() {
         })
       });
 
+      clearLocalSession();
       toast.success('Login with Google Successful!');
-      router.push('/profile');
-    } catch (err: any) {
+      router.push(redirectTo);
+    } catch (err: unknown) {
       console.error(err);
-      setError(err.message || 'Failed to login with Google');
+      setError(getErrorMessage(err, 'Failed to login with Google'));
       toast.error('Google Login Failed');
     } finally {
       setLoading(false);
@@ -149,8 +254,8 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-xs text-gray-500 mt-8">
-          Don't have an account?{' '}
-          <Link href="/register" className="font-bold text-green-500 hover:underline">
+          Don&apos;t have an account?{' '}
+          <Link href={`/register?redirect=${encodeURIComponent(redirectTo)}`} className="font-bold text-green-500 hover:underline">
             Register Here
           </Link>
         </p>
@@ -158,3 +263,16 @@ export default function LoginPage() {
     </div>
   );
 }
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
+  );
+}
+

@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Star, Heart, Check, ArrowRight, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Heart, Check, ArrowRight, ExternalLink, Lock, Loader2, ShoppingCart } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
+import { auth } from '@/lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { getLocalSession } from '@/lib/userSession';
 
 const getImageUrl = (url?: string) => {
   if (!url) return 'https://images.unsplash.com/photo-1544716278-e513176f20b5?w=400&q=80';
@@ -19,11 +21,20 @@ export default function ProductDetailsPage() {
   const router = useRouter();
   const params = useParams();
   const productId = params.id as string;
+  const fallbackCoverImage = 'https://images.unsplash.com/photo-1544716278-e513176f20b5?w=400&q=80';
+  const loginHref = `/login?redirect=${encodeURIComponent(`/products/${productId}`)}`;
+
   const [product, setProduct] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('chapters');
   const [selectedChapters, setSelectedChapters] = useState<string[]>([]);
   const [isAllSelected, setIsAllSelected] = useState(true);
-  
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [isAddedToCart, setIsAddedToCart] = useState(false);
+  const [isAddToCartAnimating, setIsAddToCartAnimating] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [coverImageSrc, setCoverImageSrc] = useState(fallbackCoverImage);
+
   // Customization State
   const [showCustomization, setShowCustomization] = useState(false);
   const [customInfo, setCustomInfo] = useState({
@@ -46,6 +57,25 @@ export default function ProductDetailsPage() {
   }, []);
 
   useEffect(() => {
+    const localSession = getLocalSession();
+    if (localSession?.user) {
+      setCurrentUser({
+        uid: localSession.user.uid,
+        email: localSession.user.email,
+        displayName: localSession.user.name,
+        authProvider: 'local',
+      });
+    }
+
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setCurrentUser(user);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
     const fetchProd = async () => {
       try {
         if (!productId) return;
@@ -65,6 +95,23 @@ export default function ProductDetailsPage() {
       setIsAllSelected(true);
     }
   }, [product]);
+
+  useEffect(() => {
+    setCoverImageSrc(getImageUrl(product?.coverImage));
+  }, [product?.coverImage]);
+
+  useEffect(() => {
+    if (!currentUser) {
+      setShowCustomization(false);
+    }
+  }, [currentUser]);
+
+  const requireAuth = (message: string) => {
+    if (currentUser) return true;
+    toast.error(message);
+    setShowLoginModal(true);
+    return false;
+  };
 
   const toggleChapter = (id: string) => {
     if (id === 'all') {
@@ -112,7 +159,9 @@ export default function ProductDetailsPage() {
   };
 
   const handleAddToCart = () => {
-    if (!product) return;
+    if (!product || isAddedToCart) return;
+
+    setIsAddToCartAnimating(true);
     const finalPrice = calculateTotal();
     
     // Resolve selected chapters to full objects for the order model
@@ -151,12 +200,31 @@ export default function ProductDetailsPage() {
     
     const existing = JSON.parse(localStorage.getItem('leafsheets_cart') || '[]');
     localStorage.setItem('leafsheets_cart', JSON.stringify([...existing, cartItem]));
-    toast.success('Added to Cart!');
+    setIsAddedToCart(true);
+    toast.success(`${product.title} added to cart successfully`);
+    setTimeout(() => setIsAddToCartAnimating(false), 500);
   };
 
-  const handleBuyNow = () => {
-    handleAddToCart();
-    router.push('/checkout');
+  const handleDetailsTabClick = () => {
+    setActiveTab('details');
+    if (!currentUser) {
+      requireAuth('Please log in to view product details.');
+    }
+  };
+
+  const handleCustomizeClick = () => {
+    if (!requireAuth('Please log in to customize this PDF.')) return;
+    setShowCustomization(prev => !prev);
+  };
+
+  const handleBuyNow = async () => {
+    setIsAddingToCart(true);
+    try {
+      handleAddToCart();
+      router.push('/checkout');
+    } finally {
+      setIsAddingToCart(false);
+    }
   };
 
   if (!product) return <div className="p-10 text-center text-gray-400 animate-pulse">Loading product...</div>;
@@ -167,6 +235,7 @@ export default function ProductDetailsPage() {
     ? Math.round(100 - (product.discountPrice / product.regularPrice) * 100)
     : 0;
   const displayPrice = product.discountPrice || product.allChaptersPrice;
+  const isDetailsLocked = activeTab === 'details' && !currentUser;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-32">
@@ -187,7 +256,13 @@ export default function ProductDetailsPage() {
         {/* Product Info Main */}
         <div className="flex gap-5">
           <div className="relative w-32 h-44 shrink-0 rounded-2xl overflow-hidden shadow-md">
-            <Image src={getImageUrl(product.coverImage)} alt={product.title} fill className="object-cover" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={coverImageSrc}
+              alt={product.title}
+              className="w-full h-full object-cover"
+              onError={() => setCoverImageSrc(fallbackCoverImage)}
+            />
           </div>
           <div className="flex flex-col py-1 flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2 flex-wrap">
@@ -211,9 +286,31 @@ export default function ProductDetailsPage() {
             
             <button 
               onClick={handleAddToCart}
-              className="mt-auto bg-gray-50 hover:bg-gray-100 text-green-600 font-bold py-2 px-3 rounded-xl border border-gray-100 transition-colors text-xs flex items-center justify-center gap-2"
+              disabled={isAddedToCart || isAddToCartAnimating}
+              className={`mt-auto font-bold py-2.5 px-3 rounded-xl border transition-all text-xs flex items-center justify-center gap-2 active:scale-[0.98] ${
+                isAddedToCart
+                  ? 'bg-green-500 text-white border-green-500 shadow-sm shadow-green-500/30 cursor-not-allowed'
+                  : isAddToCartAnimating
+                    ? 'bg-green-100 text-green-700 border-green-200 cursor-wait'
+                    : 'bg-gray-50 hover:bg-gray-100 text-green-600 border-gray-100'
+              }`}
             >
-              Add to Cart
+              {isAddedToCart ? (
+                <>
+                  <Check className="w-3.5 h-3.5" />
+                  Added to Cart
+                </>
+              ) : isAddToCartAnimating ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  Adding...
+                </>
+              ) : (
+                <>
+                  <ShoppingCart className="w-3.5 h-3.5" />
+                  Add to Cart
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -231,7 +328,8 @@ export default function ProductDetailsPage() {
             <ExternalLink className="w-4 h-4" />
             Read Demo
           </button>
-          <button onClick={() => setShowCustomization(!showCustomization)} className="flex-1 bg-gray-900 text-white font-bold py-3 rounded-2xl transition-all hover:bg-gray-800 text-sm shadow-md">
+          <button onClick={handleCustomizeClick} className={`flex-1 font-bold py-3 rounded-2xl transition-all text-sm shadow-md flex items-center justify-center gap-2 ${currentUser ? 'bg-gray-900 text-white hover:bg-gray-800' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>
+            {!currentUser && <Lock className="w-4 h-4" />}
             Customize PDF
           </button>
         </div>
@@ -283,8 +381,9 @@ export default function ProductDetailsPage() {
             Chapters List
             {activeTab === 'chapters' && <span className="absolute bottom-[-2px] left-0 w-full h-[3px] bg-green-500 rounded-t-full"></span>}
           </button>
-          <button onClick={() => setActiveTab('details')} className={`pb-3 text-sm font-bold transition-colors relative ${activeTab === 'details' ? 'text-green-500' : 'text-gray-400'}`}>
+          <button onClick={handleDetailsTabClick} className={`pb-3 text-sm font-bold transition-colors relative flex items-center gap-1 ${activeTab === 'details' ? 'text-green-500' : 'text-gray-400'}`}>
             Details
+            {!currentUser && <Lock className="w-3 h-3" />}
             {activeTab === 'details' && <span className="absolute bottom-[-2px] left-0 w-full h-[3px] bg-green-500 rounded-t-full"></span>}
           </button>
         </div>
@@ -361,20 +460,64 @@ export default function ProductDetailsPage() {
         )}
 
         {activeTab === 'details' && (
-          <div className="bg-white p-6 rounded-3xl shadow-sm text-sm text-gray-600 leading-relaxed mb-8">
-            <p>{product.description}</p>
-            {product.tags?.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-4">
-                {product.tags.map((tag: any) => (
-                  <span key={tag._id || tag} className="bg-gray-100 text-gray-600 text-xs px-3 py-1 rounded-full">
-                    #{tag.name || tag}
-                  </span>
-                ))}
+          <div className="relative bg-white p-6 rounded-3xl shadow-sm text-sm text-gray-600 leading-relaxed mb-8 overflow-hidden">
+            <div className={isDetailsLocked ? 'blur-sm select-none pointer-events-none' : ''}>
+              <p>{product.description}</p>
+              {product.tags?.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-4">
+                  {product.tags.map((tag: any) => (
+                    <span key={tag._id || tag} className="bg-gray-100 text-gray-600 text-xs px-3 py-1 rounded-full">
+                      #{tag.name || tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {isDetailsLocked && (
+              <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] flex items-center justify-center px-6">
+                <div className="text-center max-w-xs">
+                  <div className="w-12 h-12 rounded-full bg-green-100 text-green-700 mx-auto flex items-center justify-center mb-3">
+                    <Lock className="w-5 h-5" />
+                  </div>
+                  <h4 className="text-base font-bold text-gray-900 mb-1">Login Required</h4>
+                  <p className="text-xs text-gray-600 mb-4">Sign in to unlock the details for this product.</p>
+                  <Link href={loginHref} className="inline-flex items-center justify-center bg-green-500 hover:bg-green-400 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-colors">
+                    Go to Login
+                  </Link>
+                </div>
               </div>
             )}
           </div>
         )}
       </div>
+
+      {showLoginModal && (
+        <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm flex items-center justify-center p-6">
+          <div className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl border border-gray-100">
+            <div className="w-12 h-12 rounded-full bg-green-100 text-green-700 mx-auto flex items-center justify-center mb-4">
+              <Lock className="w-5 h-5" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 text-center">You need to login first</h3>
+            <p className="text-sm text-gray-500 text-center mt-2">Please login to access product details and customization features.</p>
+
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setShowLoginModal(false)}
+                className="py-2.5 rounded-xl bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200 transition-colors"
+              >
+                Not now
+              </button>
+              <Link
+                href={loginHref}
+                className="py-2.5 rounded-xl bg-green-500 text-white text-sm font-semibold text-center hover:bg-green-400 transition-colors"
+              >
+                Login
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Floating Bottom Bar */}
       <div className="fixed bottom-16 md:bottom-0 left-0 right-0 max-w-5xl mx-auto bg-white border-t border-gray-100 p-4 pb-safe z-30 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] flex items-center justify-between">
@@ -388,7 +531,8 @@ export default function ProductDetailsPage() {
         
         <button 
           onClick={handleBuyNow}
-          className="bg-green-500 hover:bg-green-400 text-white font-bold py-3.5 px-8 rounded-2xl shadow-lg shadow-green-500/30 transition-transform active:scale-95 flex items-center gap-2"
+          disabled={isAddingToCart}
+          className="bg-green-500 hover:bg-green-400 disabled:bg-green-300 text-white font-bold py-3.5 px-8 rounded-2xl shadow-lg shadow-green-500/30 transition-transform active:scale-95 disabled:cursor-not-allowed flex items-center gap-2"
         >
           Buy Now <ArrowRight className="w-5 h-5" />
         </button>
