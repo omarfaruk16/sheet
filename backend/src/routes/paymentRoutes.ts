@@ -9,7 +9,7 @@ import {
   isSslCommerzConfigured,
   validateSslCommerzPayment,
 } from '../config/sslcommerz';
-import { generateCustomPdf } from '../utils/pdfGenerator';
+import { generateCustomPdf, generateModelTestPdf } from '../utils/pdfGenerator';
 
 const router = express.Router();
 
@@ -50,8 +50,10 @@ router.post('/sslcommerz/init', protect, async (req, res) => {
     }
 
     for (const item of req.body.items) {
-      if (!item?.productId) {
-        return res.status(400).json({ message: 'Invalid product ID in cart.' });
+      const isModelTest = Boolean(item?.modelTestId);
+      const isProduct = Boolean(item?.productId);
+      if (!isModelTest && !isProduct) {
+        return res.status(400).json({ message: 'Invalid item in cart — missing productId or modelTestId.' });
       }
     }
 
@@ -78,24 +80,38 @@ router.post('/sslcommerz/init', protect, async (req, res) => {
         customerPhone: req.body.customerPhone || req.user?.phone,
         currency: (req.body.currency || 'BDT').toUpperCase(),
         items: {
-          create: req.body.items.map((item: any) => ({
-            productTitle: item.productTitle,
-            price: Number(item.price),
-            isAllChapters: item.isAllChapters,
-            headerLeftText: item.headerLeftText,
-            headerRightText: item.headerRightText,
-            watermarkText: item.watermarkText,
-            coverPageText: item.coverPageText,
-            downloadUrl: item.downloadUrl,
-            product: { connect: { id: item.productId } },
-            chaptersItem: {
-              create: (item.chapters || []).map((ch: any) => ({
-                name: ch.name,
-                pdfUrl: ch.pdfUrl,
-                price: Number(ch.price),
-              })),
-            },
-          })),
+          create: req.body.items.map((item: any) => {
+            const isModelTest = Boolean(item.modelTestId);
+            return {
+              productTitle: item.productTitle,
+              price: Number(item.price),
+              isAllChapters: item.isAllChapters,
+              headerLeftText: item.headerLeftText,
+              headerRightText: item.headerRightText,
+              watermarkText: item.watermarkText,
+              coverPageText: item.coverPageText,
+              downloadUrl: item.downloadUrl,
+              ...(isModelTest
+                ? { modelTest: { connect: { id: item.modelTestId } } }
+                : { product: { connect: { id: item.productId } } }),
+              chaptersItem: !isModelTest ? {
+                create: (item.chapters || []).map((ch: any) => ({
+                  name: ch.name,
+                  pdfUrl: ch.pdfUrl,
+                  price: Number(ch.price),
+                })),
+              } : undefined,
+              modelTestOrderItems: isModelTest ? {
+                create: (item.modelTestItems || []).map((mi: any) => ({
+                  name: mi.name,
+                  questionsDocxUrl: mi.questionsDocxUrl,
+                  solutionPdfUrl: mi.solutionPdfUrl,
+                  price: Number(mi.price),
+                  ...(mi.modelTestItemId ? { modelTestItem: { connect: { id: mi.modelTestItemId } } } : {}),
+                })),
+              } : undefined,
+            };
+          }),
         },
       },
     });
@@ -228,6 +244,11 @@ const finishPayment = async (tranId: string, valId?: string, rawPayload?: any) =
     console.error('PDF generation failed after payment:', err);
   });
 
+  // Also generate model test PDFs if any items have model test data
+  generateModelTestPdf(updated.id).catch((err) => {
+    console.error('Model test PDF generation failed after payment:', err);
+  });
+
   return { ok: true, orderId: updated.orderId };
 };
 
@@ -235,7 +256,7 @@ const frontendResultUrl = (status: string, orderId?: string, tranId?: string) =>
   const base = getFrontendBaseUrl();
   const normalizedStatus = status.toLowerCase();
   const paymentStatus = normalizedStatus === 'success' ? 'paid' : normalizedStatus;
-  const targetPath = '/profile/transactions';
+  const targetPath = paymentStatus === 'paid' ? '/profile/downloads' : '/profile/transactions';
   const params = new URLSearchParams({ paymentStatus });
   if (orderId) params.set('orderId', orderId);
   if (tranId) params.set('tranId', tranId);

@@ -42,6 +42,7 @@ model Category {
 
   subcategories SubCategory[]
   products      Product[]
+  modelTests    ModelTest[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -148,9 +149,14 @@ model OrderItem {
   order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
   orderId String
 
-  product      Product @relation(fields: [productId], references: [id])
-  productId    String
+  // Product-based item (optional — null for model test items)
+  product      Product? @relation(fields: [productId], references: [id])
+  productId    String?
   productTitle String
+
+  // Model Test-based item (optional — null for product items)
+  modelTest   ModelTest? @relation(fields: [modelTestId], references: [id])
+  modelTestId String?
 
   isAllChapters Boolean @default(false)
   price         Float
@@ -159,9 +165,16 @@ model OrderItem {
   headerRightText String?
   watermarkText   String?
   coverPageText   String?
+
+  // Product chapters download
   downloadUrl     String? @db.Text
 
+  // Model test item downloads
+  questionsDownloadUrl  String? @db.Text
+  solutionsDownloadUrl  String? @db.Text
+
   chaptersItem OrderChapter[]
+  modelTestOrderItems OrderModelTestItem[]
 }
 
 model OrderChapter {
@@ -172,6 +185,59 @@ model OrderChapter {
 
   orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
   orderItemId String
+}
+
+model ModelTest {
+  id            String  @id @default(cuid())
+  title         String
+  uniqueId      String  @unique
+  coverImage    String
+  description   String  @db.Text
+  regularPrice  Float
+  discountPrice Float?
+  demoPdfUrl    String?
+  allItemsPrice Float
+
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId String
+
+  items  ModelTestItem[]
+  orders OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ModelTestItem {
+  id              String @id @default(cuid())
+  name            String
+  questionsDocxUrl String @map("questionsZipUrl") @db.Text
+  solutionPdfUrl  String @db.Text
+  price           Float
+  order           Int    @default(0)
+
+  modelTest   ModelTest @relation(fields: [modelTestId], references: [id], onDelete: Cascade)
+  modelTestId String
+
+  orderItems OrderModelTestItem[]
+}
+
+model OrderModelTestItem {
+  id    String @id @default(cuid())
+  name  String
+  questionsDocxUrl     String @map("questionsZipUrl") @db.Text
+  solutionPdfUrl      String @db.Text
+  price               Float
+
+  // Generated files after purchase
+  questionsDownloadUrl String? @db.Text
+  solutionsDownloadUrl String? @db.Text
+
+  orderItem      OrderItem     @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  orderItemId    String
+
+  modelTestItem   ModelTestItem? @relation(fields: [modelTestItemId], references: [id])
+  modelTestItemId String?
 }
 
 model Settings {

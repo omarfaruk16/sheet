@@ -2,7 +2,7 @@ import express from 'express';
 import { protect, admin } from '../middleware/authMiddleware';
 import { prisma } from '../config/prisma';
 import crypto from 'crypto';
-import { generateCustomPdf } from '../utils/pdfGenerator';
+import { generateCustomPdf, generateModelTestPdf } from '../utils/pdfGenerator';
 
 const router = express.Router();
 
@@ -36,10 +36,10 @@ router.post('/', protect, async (req, res) => {
       return res.status(400).json({ message: 'Your cart is empty.' });
     }
     
-    // Validate that all items have a valid productId (legacy poisoned carts from before interceptor might lack it)
+// Check that product items have a valid productId
     for (const item of req.body.items) {
-      if (!item.productId) {
-        return res.status(400).json({ message: 'Invalid product ID in cart. Please clear your cart and add the product again.' });
+      if (!item.productId && !item.modelTestId) {
+        return res.status(400).json({ message: 'Invalid item in cart: missing productId or modelTestId.' });
       }
     }
 
@@ -62,24 +62,38 @@ router.post('/', protect, async (req, res) => {
         customerEmail: req.body.customerEmail,
         customerPhone: req.body.customerPhone,
         items: {
-          create: req.body.items.map((item: any) => ({
-             productTitle: item.productTitle,
-             price: item.price,
-             isAllChapters: item.isAllChapters,
-             headerLeftText: item.headerLeftText,
-             headerRightText: item.headerRightText,
-             watermarkText: item.watermarkText,
-             coverPageText: item.coverPageText,
-             downloadUrl: item.downloadUrl,
-             product: { connect: { id: item.productId } },
-             chaptersItem: {
-               create: (item.chapters || []).map((ch: any) => ({
-                 name: ch.name,
-                 pdfUrl: ch.pdfUrl,
-                 price: Number(ch.price)
-               }))
-             }
-          }))
+          create: req.body.items.map((item: any) => {
+            const isModelTest = Boolean(item.modelTestId);
+            return {
+              productTitle: item.productTitle,
+              price: item.price,
+              isAllChapters: item.isAllChapters,
+              headerLeftText: item.headerLeftText,
+              headerRightText: item.headerRightText,
+              watermarkText: item.watermarkText,
+              coverPageText: item.coverPageText,
+              downloadUrl: item.downloadUrl,
+              ...(isModelTest
+                ? { modelTest: { connect: { id: item.modelTestId } } }
+                : { product: { connect: { id: item.productId } } }),
+              chaptersItem: !isModelTest ? {
+                create: (item.chapters || []).map((ch: any) => ({
+                  name: ch.name,
+                  pdfUrl: ch.pdfUrl,
+                  price: Number(ch.price)
+                }))
+              } : undefined,
+              modelTestOrderItems: isModelTest ? {
+                create: (item.modelTestItems || []).map((mi: any) => ({
+                  name: mi.name,
+                  questionsDocxUrl: mi.questionsDocxUrl,
+                  solutionPdfUrl: mi.solutionPdfUrl,
+                  price: Number(mi.price),
+                  ...(mi.modelTestItemId ? { modelTestItem: { connect: { id: mi.modelTestItemId } } } : {}),
+                }))
+              } : undefined,
+            };
+          })
         }
       }
     });
@@ -101,15 +115,38 @@ router.get('/my/downloads', protect, async (req, res) => {
         OR: [{ paymentStatus: 'paid' }, { status: 'completed' }],
       },
       orderBy: { createdAt: 'desc' },
-      include: { items: { include: { product: true, chaptersItem: true } } },
+      include: {
+        items: {
+          include: {
+            product: true,
+            chaptersItem: true,
+            modelTest: true,
+            modelTestOrderItems: true,
+          }
+        }
+      },
     });
 
     const orders = rawOrders
       .map((o: any) => ({
         ...o,
         items: o.items
-          .map((i: any) => ({ ...i, chapters: i.chaptersItem, productId: i.product || i.productId }))
-          .filter((i: any) => Boolean(i.downloadUrl) || (Array.isArray(i.chapters) && i.chapters.some((ch: any) => Boolean(ch?.pdfUrl)))),
+          .map((i: any) => {
+            const isModelTest = Boolean(i.modelTestId);
+            return {
+              ...i,
+              itemType: isModelTest ? 'modelTest' : 'product',
+              chapters: i.chaptersItem,
+              modelTestItems: i.modelTestOrderItems,
+              productId: i.product || i.productId,
+            };
+          })
+          .filter((i: any) => {
+            if (i.itemType === 'modelTest') {
+              return Array.isArray(i.modelTestItems) && i.modelTestItems.length > 0;
+            }
+            return Boolean(i.downloadUrl) || (Array.isArray(i.chapters) && i.chapters.some((ch: any) => Boolean(ch?.pdfUrl)));
+          }),
       }))
       .filter((o: any) => o.items.length > 0);
 
@@ -127,11 +164,19 @@ router.get('/my', protect, async (req, res) => {
     const rawOrders = await prisma.order.findMany({
       where: { userId: req.user?.uid },
       orderBy: { createdAt: 'desc' },
-      include: { items: { include: { product: true, chaptersItem: true } } }
+      include: {
+        items: { include: { product: true, chaptersItem: true, modelTest: true, modelTestOrderItems: true } }
+      }
     });
     const orders = rawOrders.map((o: any) => ({
       ...o,
-      items: o.items.map((i: any) => ({ ...i, chapters: i.chaptersItem, productId: i.product || i.productId }))
+      items: o.items.map((i: any) => ({
+        ...i,
+        itemType: i.modelTestId ? 'modelTest' : 'product',
+        chapters: i.chaptersItem,
+        modelTestItems: i.modelTestOrderItems,
+        productId: i.product || i.productId,
+      }))
     }));
     res.json(orders);
   } catch (error) {
@@ -167,11 +212,19 @@ router.get('/', protect, admin, async (req, res) => {
   try {
     const rawOrders = await prisma.order.findMany({
       orderBy: { createdAt: 'desc' },
-      include: { items: { include: { product: true, chaptersItem: true } } }
+      include: {
+        items: { include: { product: true, chaptersItem: true, modelTest: true, modelTestOrderItems: true } }
+      }
     });
     const orders = rawOrders.map((o: any) => ({
       ...o,
-      items: o.items.map((i: any) => ({ ...i, chapters: i.chaptersItem, productId: i.product }))
+      items: o.items.map((i: any) => ({
+        ...i,
+        itemType: i.modelTestId ? 'modelTest' : 'product',
+        chapters: i.chaptersItem,
+        modelTestItems: i.modelTestOrderItems,
+        productId: i.product,
+      }))
     }));
     res.json(orders);
   } catch (error) {
@@ -210,6 +263,7 @@ router.put('/:id/complete', protect, admin, async (req, res) => {
     
     // In background, generate customized PDFs for this order
     generateCustomPdf(order.id).catch(console.error);
+    generateModelTestPdf(order.id).catch(console.error);
 
     res.json(order);
   } catch (error) {
