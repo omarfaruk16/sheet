@@ -35,7 +35,7 @@ export default function AdminSidebar() {
   return (
     <aside className="w-64 bg-white border-r min-h-screen flex flex-col">
       <div className="p-6 border-b">
-        <h1 className="text-2xl font-bold text-green-600 tracking-tight">LeafSheets Admin</h1>
+        <h1 className="text-2xl font-bold text-green-600 tracking-tight">Orbit Sheet Admin</h1>
         {adminInfo && (
           <p className="text-xs text-gray-400 mt-1 truncate">@{adminInfo.username}</p>
         )}

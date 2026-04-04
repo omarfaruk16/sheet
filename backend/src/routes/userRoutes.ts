@@ -1,8 +1,46 @@
 import express from 'express';
 import { protect, admin } from '../middleware/authMiddleware';
 import { prisma } from '../config/prisma';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import crypto from 'crypto';
 
 const router = express.Router();
+
+// ─── Avatar Upload (multer) ──────────────────────────────────────────────────
+const uploadsDir = path.join(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+const avatarStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, uploadsDir),
+  filename: (_req, file, cb) => {
+    const unique = crypto.randomUUID().substring(0, 8).toUpperCase();
+    const ext = path.extname(file.originalname);
+    cb(null, `AVT-${unique}${ext}`);
+  },
+});
+const avatarUpload = multer({
+  storage: avatarStorage,
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('Only image files are allowed'));
+  },
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+});
+
+// @desc    Upload an avatar image file
+// @route   POST /api/users/upload-avatar
+// @access  Private
+router.post('/upload-avatar', protect, avatarUpload.single('image'), (req, res) => {
+  if (!req.file) {
+    res.status(400).json({ message: 'No file uploaded' });
+    return;
+  }
+  const backendUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 5000}`;
+  const url = `${backendUrl}/uploads/${req.file.filename}`;
+  res.json({ url, filename: req.file.filename });
+});
 
 // @desc    Get all users
 // @route   GET /api/users

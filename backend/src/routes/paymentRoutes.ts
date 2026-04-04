@@ -126,7 +126,7 @@ router.post('/sslcommerz/init', protect, async (req, res) => {
       fail_url: `${backendBaseUrl}/api/payments/sslcommerz/fail`,
       cancel_url: `${backendBaseUrl}/api/payments/sslcommerz/cancel`,
       ipn_url: `${backendBaseUrl}/api/payments/sslcommerz/ipn`,
-      product_name: 'LeafSheets Order',
+      product_name: 'Orbit Sheet Order',
       product_category: 'Digital',
       product_profile: 'general',
       cus_name: createdOrder.customerName,

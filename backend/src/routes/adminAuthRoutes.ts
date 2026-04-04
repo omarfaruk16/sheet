@@ -111,9 +111,10 @@ router.get('/dashboard-stats', protectAdmin, async (req, res) => {
     for (let i = 6; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(today.getDate() - i);
-      // Use consistently fixed locale date string parts to group
       const dayName = date.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'Asia/Dhaka' });
-      const dayKey = date.toISOString().split('T')[0];
+      const localDateStr = date.toLocaleDateString('en-US', { timeZone: 'Asia/Dhaka', year: 'numeric', month: '2-digit', day: '2-digit' });
+      const [month, day, year] = localDateStr.split('/');
+      const dayKey = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
       trends[dayKey] = { sales: 0, revenue: 0, name: dayName };
     }
 

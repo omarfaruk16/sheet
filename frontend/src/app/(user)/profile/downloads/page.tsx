@@ -20,6 +20,7 @@ export default function DownloadsLibrary() {
   const [search, setSearch] = useState('');
   const [library, setLibrary] = useState<any[]>([]);
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
+  const [activeTab, setActiveTab] = useState<'all' | 'product' | 'modelTest'>('all');
 
   const toggleExpand = (id: string, e: React.MouseEvent) => {
     // prevent accordion toggle if clicking the download button
@@ -146,7 +147,11 @@ export default function DownloadsLibrary() {
     }
   }, []);
 
-  const filtered = library.filter(item => item.title.toLowerCase().includes(search.toLowerCase()));
+  const filtered = library.filter(item => {
+    const matchesSearch = item.title.toLowerCase().includes(search.toLowerCase());
+    const matchesTab = activeTab === 'all' || item.itemType === activeTab;
+    return matchesSearch && matchesTab;
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 pb-32">
@@ -172,6 +177,28 @@ export default function DownloadsLibrary() {
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-100 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-green-500 transition-all shadow-sm"
           />
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-2 p-1.5 bg-gray-100/70 rounded-2xl">
+          <button 
+            onClick={() => setActiveTab('all')}
+            className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${activeTab === 'all' ? 'bg-white shadow border border-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            All
+          </button>
+          <button 
+            onClick={() => setActiveTab('product')}
+            className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${activeTab === 'product' ? 'bg-white shadow border border-gray-100 text-green-600' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            Sheets
+          </button>
+          <button 
+            onClick={() => setActiveTab('modelTest')}
+            className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${activeTab === 'modelTest' ? 'bg-white shadow border border-gray-100 text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            Model Tests
+          </button>
         </div>
 
         {/* Library Items */}

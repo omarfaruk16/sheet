@@ -200,7 +200,7 @@ function RegisterContent() {
       <div className="w-full max-w-sm bg-white p-8 rounded-[40px] shadow-sm border border-gray-100">
         <div className="text-center mb-10">
           <h1 className="text-2xl font-black text-gray-900 mb-2">Create Account 🎉</h1>
-          <p className="text-sm text-gray-500">Join LeafSheets to purchase and store your premium PDF guides.</p>
+          <p className="text-sm text-gray-500">Join Orbit Sheet to purchase and store your premium PDF guides.</p>
         </div>
 
         {error && (

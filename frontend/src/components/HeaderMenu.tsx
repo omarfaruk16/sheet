@@ -12,7 +12,7 @@ import { getLocalSession } from '@/lib/userSession';
 export default function HeaderMenu() {
   const pathname = usePathname();
   const [cartCount, setCartCount] = useState(0);
-  const [currentUser, setCurrentUser] = useState<{ displayName: string | null; photoURL: string | null } | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ displayName: string | null; photoURL: string | null; email: string | null } | null>(null);
 
   useEffect(() => {
     const updateCount = () => {
@@ -36,9 +36,9 @@ export default function HeaderMenu() {
       const fbUser = auth.currentUser;
       const localSession = getLocalSession();
       if (fbUser) {
-        setCurrentUser({ displayName: fbUser.displayName, photoURL: fbUser.photoURL });
+        setCurrentUser({ displayName: fbUser.displayName, photoURL: fbUser.photoURL, email: fbUser.email });
       } else if (localSession?.user) {
-        setCurrentUser({ displayName: localSession.user.name || null, photoURL: null });
+        setCurrentUser({ displayName: localSession.user.name || null, photoURL: null, email: localSession.user.email || null });
       } else {
         setCurrentUser(null);
       }
@@ -79,7 +79,7 @@ export default function HeaderMenu() {
       <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
         <Link href="/" className="font-bold text-2xl tracking-tighter text-green-600 flex items-center gap-2">
           <BookOpen className="w-6 h-6" />
-          <span>OrbitSheet</span>
+          <span>Orbit Sheet</span>
         </Link>
         
         <nav className="flex items-center gap-8">
@@ -114,6 +114,8 @@ export default function HeaderMenu() {
             <Link href="/profile" className="flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-green-600 transition-colors">
               {currentUser.photoURL ? (
                 <img src={currentUser.photoURL} alt="Profile" className="w-6 h-6 rounded-full object-cover border border-gray-200" />
+              ) : currentUser.email ? (
+                <img src={`https://unavatar.io/${currentUser.email}`} alt="Profile" className="w-6 h-6 rounded-full object-cover border border-gray-200" />
               ) : (
                 <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
                   <User className="w-4 h-4 text-gray-500" />

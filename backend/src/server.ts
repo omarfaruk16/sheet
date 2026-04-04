@@ -129,7 +129,7 @@ app.use('/api/model-tests', modelTestRoutes);
 
 // Health check
 app.get('/', (req, res) => {
-  res.send('LeafSheets API is running...');
+  res.send('Orbit Sheet API is running...');
 });
 
 app.listen(PORT, async () => {

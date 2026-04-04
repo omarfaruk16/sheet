@@ -111,11 +111,18 @@ export default function ProfilePage() {
           </Link>
         </div>
 
-        {/* User Info Card */}
         <div className="flex items-center gap-4 mb-8">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-bold text-xl">
-            {getUserInitials()}
-          </div>
+          {currentUser && (currentUser.photoURL || currentUser.email) ? (
+            <img 
+              src={currentUser.photoURL || `https://unavatar.io/${currentUser.email}`} 
+              alt="Profile" 
+              className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-md bg-white text-[10px] items-center justify-center flex font-bold text-gray-400" 
+            />
+          ) : (
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-bold text-xl border-4 border-white shadow-md">
+              {getUserInitials()}
+            </div>
+          )}
           <div className="flex-1">
             <h2 className="text-xl font-semibold text-gray-900">{displayName}</h2>
             <p className="text-gray-600">{displayEmail}</p>

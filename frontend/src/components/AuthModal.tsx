@@ -171,7 +171,7 @@ function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
     <div>
       <div className="text-center mb-8">
         <h2 className="text-2xl font-black text-gray-900 mb-1">Welcome Back! 👋</h2>
-        <p className="text-sm text-gray-500">Sign in to your LeafSheets account.</p>
+        <p className="text-sm text-gray-500">Sign in to your Orbit Sheet account.</p>
       </div>
 
       {error && (
@@ -337,7 +337,7 @@ function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) {
     <div>
       <div className="text-center mb-8">
         <h2 className="text-2xl font-black text-gray-900 mb-1">Create Account 🎉</h2>
-        <p className="text-sm text-gray-500">Join LeafSheets to access your premium PDFs.</p>
+        <p className="text-sm text-gray-500">Join Orbit Sheet to access your premium PDFs.</p>
       </div>
 
       {error && (
