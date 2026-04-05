@@ -64,7 +64,7 @@ export default function DiscoverPage() {
     <div className="min-h-screen bg-[#F9FAFB] pb-24">
       {/* Header */}
       <div className="px-6 pt-6 pb-4 bg-white sticky top-0 z-20 shadow-sm">
-        <h1 className="text-xl font-bold text-gray-900 mb-4">Discover</h1>
+        <h1 className="text-xl font-bold text-gray-900 mb-4">Documents</h1>
 
         {/* Search */}
         <div className="flex gap-3 mb-4">

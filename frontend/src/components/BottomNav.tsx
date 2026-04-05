@@ -80,7 +80,7 @@ export default function BottomNav() {
 
   const navItems = [
     { name: 'Home', href: '/', icon: Home },
-    { name: 'Sheets', href: '/products', icon: Layers },
+    { name: 'Documents', href: '/products', icon: Layers },
     { name: 'Tests', href: '/model-tests', icon: FlaskConical },
     { name: 'Cart', href: '/cart', icon: ShoppingCart },
     { name: 'Library', href: '/profile/downloads', icon: Bookmark },
@@ -88,7 +88,7 @@ export default function BottomNav() {
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-6 py-3 pb-safe z-50">
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-green-200 shadow-none px-6 py-3 pb-safe z-50">
       <div className="max-w-md mx-auto flex justify-between items-center">
         {navItems.map((item) => {
           const Icon = item.icon;

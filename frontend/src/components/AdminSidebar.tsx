@@ -13,7 +13,7 @@ export function cn(...inputs: ClassValue[]) {
 
 const navItems = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-  { name: 'Products', href: '/admin/products', icon: Package },
+  { name: 'Sheets', href: '/admin/products', icon: Package },
   { name: 'Model Tests', href: '/admin/model-tests', icon: FlaskConical },
   { name: 'Categories', href: '/admin/categories', icon: Layers },
   { name: 'Tags', href: '/admin/tags', icon: Tag },

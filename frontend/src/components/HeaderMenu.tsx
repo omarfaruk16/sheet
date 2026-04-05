@@ -71,7 +71,7 @@ export default function HeaderMenu() {
 
   const navItems = [
     { name: 'Home', href: '/', icon: Home },
-    { name: 'Discover', href: '/products', icon: Layers },
+    { name: 'Documents', href: '/products', icon: Layers },
   ];
 
   return (
