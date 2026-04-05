@@ -44,7 +44,10 @@ export default function ProductDetailsPage() {
     coverText: '',
   });
 
-  // Load saved preferences
+  // Wishlist
+  const [isWishlisted, setIsWishlisted] = useState(false);
+
+  // Load saved preferences + wishlist state
   useEffect(() => {
     const saved = localStorage.getItem('leafsheets_customPrefs');
     if (saved) {
@@ -54,7 +57,10 @@ export default function ProductDetailsPage() {
         // ignore JSON parse errors
       }
     }
-  }, []);
+    // Check wishlist
+    const wl = JSON.parse(localStorage.getItem('leafsheets_wishlist') || '[]');
+    setIsWishlisted(wl.some((w: any) => w.productId === productId || w.id === productId));
+  }, [productId]);
 
   useEffect(() => {
     const localSession = getLocalSession();
@@ -161,6 +167,14 @@ export default function ProductDetailsPage() {
   const handleAddToCart = () => {
     if (!product || isAddedToCart) return;
 
+    // Enforce minimum 7-character watermark
+    if (!customInfo.watermarkText || customInfo.watermarkText.trim().length < 7) {
+      setShowCustomization(true);
+      toast.error('Watermark name is required (at least 7 characters)');
+      setTimeout(() => window.scrollBy({ top: 300, behavior: 'smooth' }), 100);
+      return;
+    }
+
     setIsAddToCartAnimating(true);
     const finalPrice = calculateTotal();
     
@@ -220,6 +234,14 @@ export default function ProductDetailsPage() {
   const handleBuyNow = async () => {
     if (!product) return;
     if (!requireAuth('Please log in to purchase.')) return;
+
+    // Enforce minimum 7-character watermark
+    if (!customInfo.watermarkText || customInfo.watermarkText.trim().length < 7) {
+      setShowCustomization(true);
+      toast.error('Watermark name is required (at least 7 characters)');
+      setTimeout(() => window.scrollBy({ top: 300, behavior: 'smooth' }), 100);
+      return;
+    }
     setIsAddingToCart(true);
     try {
       // Resolve chapters
@@ -275,8 +297,32 @@ export default function ProductDetailsPage() {
           </Link>
           <h1 className="text-lg font-bold text-gray-900">Details</h1>
         </div>
-        <button className="p-2 text-gray-400 hover:text-red-500 transition-colors">
-          <Heart className="w-6 h-6" />
+        <button
+          onClick={() => {
+            const wl = JSON.parse(localStorage.getItem('leafsheets_wishlist') || '[]');
+            if (isWishlisted) {
+              const updated = wl.filter((w: any) => w.productId !== productId && w.id !== productId);
+              localStorage.setItem('leafsheets_wishlist', JSON.stringify(updated));
+              setIsWishlisted(false);
+              toast.success('Removed from wishlist');
+            } else {
+              const newItem = {
+                id: productId,
+                productId,
+                itemType: 'product',
+                title: product?.title || '',
+                cover: product?.coverImage,
+                price: product?.discountPrice || product?.allChaptersPrice || product?.regularPrice || 0,
+                category: product?.category?.name || '',
+              };
+              localStorage.setItem('leafsheets_wishlist', JSON.stringify([...wl, newItem]));
+              setIsWishlisted(true);
+              toast.success('Added to wishlist!');
+            }
+          }}
+          className="p-2 transition-colors"
+        >
+          <Heart className={`w-6 h-6 transition-colors ${isWishlisted ? 'text-red-500 fill-red-500' : 'text-gray-400 hover:text-red-400'}`} />
         </button>
       </div>
 
@@ -387,10 +433,19 @@ export default function ProductDetailsPage() {
               </div>
 
               <div className="space-y-1.5 p-3 bg-orange-50/50 border border-orange-100 border-dashed rounded-2xl">
-                <label className="text-[10px] font-bold text-orange-600 uppercase">Unique Watermark Text</label>
+                <label className="text-[10px] font-bold text-orange-600 uppercase">Unique Watermark Text (required, min 7 chars)</label>
                 <div className="flex gap-3 items-center">
-                  <input type="text" placeholder="e.g. For Personal Use" value={customInfo.watermarkText} onChange={e => setCustomInfo({...customInfo, watermarkText: e.target.value})} className="flex-1 bg-white px-3 py-2 rounded-xl text-sm outline-none focus:ring-1 focus:ring-orange-400 border border-transparent text-center font-mono opacity-50" />
+                  <input
+                    type="text"
+                    placeholder="e.g. For Personal Use"
+                    value={customInfo.watermarkText}
+                    onChange={e => setCustomInfo({...customInfo, watermarkText: e.target.value})}
+                    className="flex-1 bg-white px-3 py-2 rounded-xl text-sm outline-none focus:ring-1 focus:ring-orange-400 border border-transparent text-center font-mono opacity-50"
+                  />
                 </div>
+                {customInfo.watermarkText && customInfo.watermarkText.trim().length < 7 && (
+                  <p className="text-[10px] text-red-500">⚠ At least 7 characters required ({customInfo.watermarkText.trim().length}/7)</p>
+                )}
               </div>
 
               <div className="space-y-1.5 p-3 bg-gray-50 border border-gray-100 rounded-2xl">

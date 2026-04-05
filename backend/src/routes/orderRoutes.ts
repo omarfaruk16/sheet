@@ -44,7 +44,7 @@ router.post('/', protect, async (req, res) => {
     }
 
     const orderId = `ORD-${crypto.randomUUID().substring(0, 8).toUpperCase()}`;
-    const createdOrder = await prisma.order.create({
+    const createdOrder = await (prisma as any).order.create({
       data: {
         orderId,
         userId: req.user?.uid as string,
@@ -52,6 +52,8 @@ router.post('/', protect, async (req, res) => {
         subtotal: req.body.subtotal,
         serviceFee: req.body.serviceFee || 0,
         totalAmount: req.body.totalAmount,
+        couponCode: req.body.couponCode || null,
+        couponDiscount: req.body.couponDiscount || 0,
         fulfillmentMethod: req.body.fulfillmentMethod || 'digital',
         paymentMethod: req.body.paymentMethod,
         paymentGateway: req.body.paymentGateway || 'manual',
@@ -97,12 +99,27 @@ router.post('/', protect, async (req, res) => {
         }
       }
     });
+
+    // Increment coupon usage count if a coupon was applied
+    if (req.body.couponCode) {
+      try {
+        await (prisma as any).coupon.update({
+          where: { code: req.body.couponCode.trim().toUpperCase() },
+          data: { usedCount: { increment: 1 } },
+        });
+      } catch (e) {
+        // Non-fatal: coupon may have been deleted between validate and order
+        console.warn('Could not increment coupon usedCount:', e);
+      }
+    }
+
     res.status(201).json(createdOrder);
   } catch (error: any) {
     console.error('Order creation error:', error);
     res.status(500).json({ message: 'Error creating order', error: error.message || String(error) });
   }
 });
+
 
 // @desc    Get logged in user downloadable library (paid/completed orders only)
 // @route   GET /api/orders/my/downloads

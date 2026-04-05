@@ -20,6 +20,7 @@ export default function BottomNav() {
   const pathname = usePathname();
   const [cartCount, setCartCount] = useState(0);
   const [libraryCount, setLibraryCount] = useState(0);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     // Poll cart length
@@ -58,8 +59,13 @@ export default function BottomNav() {
     // Fetch library count
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
+        setIsLoggedIn(true);
         const token = await user.getIdToken();
         await loadLibraryCount(token);
+      } else {
+        // Also check local session
+        const localSession = getLocalSession();
+        setIsLoggedIn(!!localSession?.token);
       }
     });
 
@@ -78,7 +84,7 @@ export default function BottomNav() {
     { name: 'Tests', href: '/model-tests', icon: FlaskConical },
     { name: 'Cart', href: '/cart', icon: ShoppingCart },
     { name: 'Library', href: '/profile/downloads', icon: Bookmark },
-    { name: 'Me', href: '/profile', icon: User },
+    { name: 'Me', href: isLoggedIn ? '/profile' : '/login', icon: User },
   ];
 
   return (

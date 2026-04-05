@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Settings, Download, Heart, Clock, ShieldCheck, ChevronRight, LogOut, HelpCircle, Lock, Wallet } from 'lucide-react';
+import { Settings, Download, Heart, Clock, ChevronRight, LogOut, HelpCircle, Wallet } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import axios from 'axios';
@@ -55,13 +55,15 @@ export default function ProfilePage() {
       } else {
         setCurrentUser(null);
         setOrderCount(0);
+        // Redirect to login when not authenticated
+        router.push('/login');
       }
 
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [router]);
 
   const handleLogout = async () => {
     try {
@@ -181,32 +183,19 @@ export default function ProfilePage() {
           <ChevronRight className="w-5 h-5 text-gray-400" />
         </Link>
 
-        {/* Verified Purchases */}
-        <Link href="/profile/purchases" className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition">
-          <div className="flex items-center gap-3">
-            <ShieldCheck className="w-5 h-5 text-green-600" />
-            <span className="font-medium">Verified Purchases</span>
-          </div>
-          <ChevronRight className="w-5 h-5 text-gray-400" />
-        </Link>
-
-        {/* Security Settings */}
-        <Link href="/profile/security" className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition">
-          <div className="flex items-center gap-3">
-            <Lock className="w-5 h-5 text-purple-600" />
-            <span className="font-medium">Security Settings</span>
-          </div>
-          <ChevronRight className="w-5 h-5 text-gray-400" />
-        </Link>
-
-        {/* Help & Support */}
-        <Link href="/support" className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition">
+        {/* Help & Support - WhatsApp */}
+        <a
+          href="https://wa.me/8801518405600"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition"
+        >
           <div className="flex items-center gap-3">
             <HelpCircle className="w-5 h-5 text-orange-600" />
             <span className="font-medium">Help & Support</span>
           </div>
           <ChevronRight className="w-5 h-5 text-gray-400" />
-        </Link>
+        </a>
 
         {/* Logout */}
         <button

@@ -169,11 +169,12 @@ router.post('/', protect, admin, async (req, res) => {
         items: {
           create: (items || []).map((item: any, idx: number) => ({
             name: item.name,
+            questionsZipUrl: item.questionsDocxUrl || item.questionsZipUrl,
             questionsDocxUrl: item.questionsDocxUrl,
             solutionPdfUrl: item.solutionPdfUrl,
             price: Number(item.price),
             order: idx + 1,
-          })),
+          })) as any,
         },
       },
       include: { category: true, items: true },
@@ -210,11 +211,12 @@ router.put('/:id', protect, admin, async (req, res) => {
         items: items && Array.isArray(items) ? {
           create: items.map((item: any, idx: number) => ({
             name: item.name,
+            questionsZipUrl: item.questionsDocxUrl || item.questionsZipUrl,
             questionsDocxUrl: item.questionsDocxUrl,
             solutionPdfUrl: item.solutionPdfUrl,
             price: Number(item.price),
             order: idx + 1,
-          })),
+          })) as any,
         } : undefined,
       },
       include: { category: true, items: { orderBy: { order: 'asc' } } },

@@ -18,6 +18,7 @@ import adminPasswordRoutes from './routes/adminPasswordRoutes';
 import settingsRoutes from './routes/settingsRoutes';
 import paymentRoutes from './routes/paymentRoutes';
 import modelTestRoutes from './routes/modelTestRoutes';
+import couponRoutes from './routes/couponRoutes';
 const envCandidates = [
   path.resolve(process.cwd(), '../.env'),
   path.resolve(process.cwd(), '.env'),
@@ -126,6 +127,7 @@ app.use('/api/admin', adminAuthRoutes);
 app.use('/api/admin', adminPasswordRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/model-tests', modelTestRoutes);
+app.use('/api/coupons', couponRoutes);
 
 // Health check
 app.get('/', (req, res) => {

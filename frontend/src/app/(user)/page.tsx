@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, Filter, Bell, Zap, Star, Bookmark, ShoppingCart, BookOpen, User, FlaskConical, FileArchive, FileText } from 'lucide-react';
+import { Search, Filter, BookOpen, ShoppingCart, FlaskConical, FileArchive, FileText } from 'lucide-react';
 import axios from 'axios';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -322,23 +322,6 @@ export default function HomePage() {
             })}
           </div>
         )}
-      </div>
-
-      {/* User Stats */}
-      <div className="px-6 mb-8 grid grid-cols-3 gap-3">
-        {[
-          { icon: ShoppingCart, label: 'ORDERS', value: '0' },
-          { icon: Bookmark, label: 'SAVED', value: '0' },
-          { icon: Star, label: 'XP POINTS', value: '0' },
-        ].map((stat, i) => (
-          <div key={i} className="bg-green-50/50 rounded-3xl p-4 flex flex-col items-center justify-center text-center">
-            <div className="w-8 h-8 rounded-full bg-white text-green-500 flex items-center justify-center mb-2 shadow-sm">
-              <stat.icon className="w-4 h-4" />
-            </div>
-            <p className="text-[9px] font-bold text-gray-500 tracking-widest">{stat.label}</p>
-            <p className="text-base font-bold text-gray-900">{stat.value}</p>
-          </div>
-        ))}
       </div>
 
     </div>

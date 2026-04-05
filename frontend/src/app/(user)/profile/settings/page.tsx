@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import {ArrowLeft, Camera, Loader2, Save, User as UserIcon } from 'lucide-react';
+import {ArrowLeft, Camera, KeyRound, Loader2, Save, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged, updateProfile } from 'firebase/auth';
@@ -197,7 +197,7 @@ export default function ProfileSettingsPage() {
             </div>
           </div>
 
-          <div className="pt-4">
+          <div className="pt-4 space-y-3">
             <button
               type="submit"
               disabled={saving || uploading}
@@ -215,6 +215,15 @@ export default function ProfileSettingsPage() {
                 </>
               )}
             </button>
+
+            {/* Change Password Link */}
+            <Link
+              href="/profile/settings/password"
+              className="w-full flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3.5 px-6 rounded-xl transition-all active:scale-95"
+            >
+              <KeyRound className="w-5 h-5" />
+              Change Password
+            </Link>
           </div>
 
         </form>
