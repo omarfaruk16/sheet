@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Layers, ShoppingCart, Bookmark, User } from 'lucide-react';
+import { Home, Layers, ShoppingCart, Bookmark, User, FlaskConical } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useState, useEffect } from 'react';
@@ -74,7 +74,8 @@ export default function BottomNav() {
 
   const navItems = [
     { name: 'Home', href: '/', icon: Home },
-    { name: 'Discover', href: '/products', icon: Layers },
+    { name: 'Sheets', href: '/products', icon: Layers },
+    { name: 'Tests', href: '/model-tests', icon: FlaskConical },
     { name: 'Cart', href: '/cart', icon: ShoppingCart },
     { name: 'Library', href: '/profile/downloads', icon: Bookmark },
     { name: 'Me', href: '/profile', icon: User },

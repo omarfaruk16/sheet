@@ -42,15 +42,28 @@ export const clearLocalSession = () => {
 export const getAccessToken = async (): Promise<string | null> => {
   if (typeof window === 'undefined') return null;
 
-  if ('currentUser' in auth && auth.currentUser) {
-    try {
-      return await auth.currentUser.getIdToken();
-    } catch {
-      // Fall through to local session token.
-    }
-  }
+  // First try local session — always available synchronously
+  const localToken = getLocalSession()?.token;
+  if (localToken) return localToken;
 
-  return getLocalSession()?.token || null;
+  // Wait for Firebase auth state to resolve (handles post-SSLCommerz redirect race condition)
+  return new Promise<string | null>((resolve) => {
+    const timeout = setTimeout(() => resolve(null), 3000); // 3s max wait
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      clearTimeout(timeout);
+      unsubscribe();
+      if (user) {
+        try {
+          const token = await user.getIdToken();
+          resolve(token);
+        } catch {
+          resolve(null);
+        }
+      } else {
+        resolve(null);
+      }
+    });
+  });
 };
 
 export const getActiveUser = (): LocalSessionUser | null => {

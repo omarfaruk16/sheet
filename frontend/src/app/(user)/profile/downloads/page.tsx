@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Search, DownloadCloud, Lock, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Search, DownloadCloud, Lock, CheckCircle2, FileText, FlaskConical } from 'lucide-react';
 import axios from 'axios';
 import { auth } from '@/lib/firebase';
 import { getLocalSession } from '@/lib/userSession';
@@ -20,6 +20,7 @@ export default function DownloadsLibrary() {
   const [search, setSearch] = useState('');
   const [library, setLibrary] = useState<any[]>([]);
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
+  const [activeTab, setActiveTab] = useState<'all' | 'product' | 'modelTest'>('all');
 
   const toggleExpand = (id: string, e: React.MouseEvent) => {
     // prevent accordion toggle if clicking the download button
@@ -43,21 +44,41 @@ export default function DownloadsLibrary() {
         if (!isSuccessful) return;
 
         order.items.forEach((item: any) => {
-          const chapters = Array.isArray(item.chapters) ? item.chapters.filter((ch: any) => Boolean(ch?.pdfUrl)) : [];
-          const hasDownload = Boolean(item.downloadUrl) || chapters.length > 0;
-          if (!hasDownload) return;
+          const isModelTest = item.itemType === 'modelTest' || Boolean(item.modelTestId);
 
-          items.push({
-            id: item.id || item._id,
-            title: item.productTitle || 'Generated PDF',
-            type: item.isAllChapters ? 'Full Book' : 'Selected Chapters',
-            cover: item.productId?.coverImage || 'https://images.unsplash.com/photo-1544716278-e513176f20b5?w=400&q=80',
-            status: order.status,
-            paymentStatus: order.paymentStatus,
-            date: new Date(order.createdAt).toLocaleDateString(),
-            url: item.downloadUrl ? `${API_URL.replace('/api', '')}${item.downloadUrl}` : null,
-            chapters,
-          });
+          if (isModelTest) {
+            // Model Test item — show if it has modelTestItems
+            const mtItems = Array.isArray(item.modelTestItems) ? item.modelTestItems : [];
+            if (!mtItems.length) return;
+            items.push({
+              id: item.id || item._id,
+              title: item.productTitle || 'Model Test',
+              type: item.isAllChapters ? 'Full Bundle' : 'Selected Items',
+              cover: item.modelTest?.coverImage || item.productId?.coverImage || 'https://images.unsplash.com/photo-1596496181871-9681eacf9764?w=400&q=80',
+              status: order.status,
+              paymentStatus: order.paymentStatus,
+              date: new Date(order.createdAt).toLocaleDateString(),
+              itemType: 'modelTest',
+              modelTestItems: mtItems,
+            });
+          } else {
+            // Product item
+            const chapters = Array.isArray(item.chapters) ? item.chapters.filter((ch: any) => Boolean(ch?.pdfUrl)) : [];
+            const hasDownload = Boolean(item.downloadUrl) || chapters.length > 0;
+            if (!hasDownload) return;
+            items.push({
+              id: item.id || item._id,
+              title: item.productTitle || 'Generated PDF',
+              type: item.isAllChapters ? 'Full Book' : 'Selected Chapters',
+              cover: item.productId?.coverImage || 'https://images.unsplash.com/photo-1544716278-e513176f20b5?w=400&q=80',
+              status: order.status,
+              paymentStatus: order.paymentStatus,
+              date: new Date(order.createdAt).toLocaleDateString(),
+              url: item.downloadUrl ? `${API_URL.replace('/api', '')}${item.downloadUrl}` : null,
+              itemType: 'product',
+              chapters,
+            });
+          }
         });
       });
       setLibrary(items);
@@ -108,7 +129,29 @@ export default function DownloadsLibrary() {
     };
   }, []);
 
-  const filtered = library.filter(item => item.title.toLowerCase().includes(search.toLowerCase()));
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const paymentStatus = params.get('paymentStatus');
+    if (paymentStatus) {
+      const normalizedStatus = paymentStatus.toLowerCase();
+      if (['paid', 'success'].includes(normalizedStatus)) {
+        localStorage.removeItem('leafsheets_cart');
+        
+        // Remove query params to hide 'paymentStatus=paid' from URL
+        const url = new URL(window.location.href);
+        url.searchParams.delete('paymentStatus');
+        url.searchParams.delete('orderId');
+        url.searchParams.delete('tranId');
+        window.history.replaceState({}, '', url);
+      }
+    }
+  }, []);
+
+  const filtered = library.filter(item => {
+    const matchesSearch = item.title.toLowerCase().includes(search.toLowerCase());
+    const matchesTab = activeTab === 'all' || item.itemType === activeTab;
+    return matchesSearch && matchesTab;
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 pb-32">
@@ -134,6 +177,28 @@ export default function DownloadsLibrary() {
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-100 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-green-500 transition-all shadow-sm"
           />
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-2 p-1.5 bg-gray-100/70 rounded-2xl">
+          <button 
+            onClick={() => setActiveTab('all')}
+            className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${activeTab === 'all' ? 'bg-white shadow border border-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            All
+          </button>
+          <button 
+            onClick={() => setActiveTab('product')}
+            className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${activeTab === 'product' ? 'bg-white shadow border border-gray-100 text-green-600' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            Sheets
+          </button>
+          <button 
+            onClick={() => setActiveTab('modelTest')}
+            className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${activeTab === 'modelTest' ? 'bg-white shadow border border-gray-100 text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            Model Tests
+          </button>
         </div>
 
         {/* Library Items */}
@@ -190,39 +255,84 @@ export default function DownloadsLibrary() {
                     </div>
                   </div>
 
-                  {/* Expanded Chapters List */}
+                  {/* Expanded Content */}
                   {isExpanded && (
                     <div className="bg-gray-50 px-5 py-4 border-t border-gray-100">
-                      <p className="text-xs font-bold text-gray-600 mb-3 uppercase tracking-wider">
-                        Included Chapters ({item.chapters.length})
-                      </p>
-                      {item.chapters.length > 0 ? (
-                        <ul className="space-y-2">
-                          {item.chapters.map((ch: any, idx: number) => (
-                            <li key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm text-gray-700 bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
-                              <div className="flex items-center gap-2.5">
-                                <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
-                                <span className="leading-snug font-medium">{ch.name}</span>
-                              </div>
-                              {(item.status === 'completed' || item.paymentStatus === 'paid') && ch.pdfUrl ? (
-                                <a 
-                                  href={getPdfUrl(ch.pdfUrl)}
-                                  target="_blank" 
-                                  rel="noopener noreferrer" 
-                                  className="text-green-700 bg-green-50 hover:bg-green-100 border border-green-200 px-4 py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center sm:justify-start gap-1.5 whitespace-nowrap"
-                                >
-                                  <DownloadCloud className="w-4 h-4" /> Download
-                                </a>
-                              ) : item.status !== 'completed' && item.paymentStatus !== 'paid' ? (
-                                <span className="text-orange-500 bg-orange-50 px-3 py-1.5 rounded-lg text-xs font-bold border border-orange-100 whitespace-nowrap">
-                                  Pending Admin Approval
-                                </span>
-                              ) : null}
-                            </li>
-                          ))}
-                        </ul>
+                      {item.itemType === 'modelTest' ? (
+                        // Model Test — show questions ZIP + solutions PDF per item
+                        <>
+                          <p className="text-xs font-bold text-gray-600 mb-3 uppercase tracking-wider flex items-center gap-2">
+                            <FlaskConical className="w-4 h-4 text-purple-500" />
+                            Test Items ({item.modelTestItems.length})
+                          </p>
+                          {(item.status === 'completed' || item.paymentStatus === 'paid') ? (
+                            <ul className="space-y-3">
+                              {item.modelTestItems.map((mi: any, idx: number) => (
+                                <li key={idx} className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                                  <p className="text-sm font-medium text-gray-800 mb-2 flex items-center gap-2">
+                                    <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                                    {mi.name}
+                                  </p>
+                                  <div className="flex flex-wrap gap-2">
+                                    {mi.questionsDownloadUrl ? (
+                                      <a href={getPdfUrl(mi.questionsDownloadUrl)} download
+                                        className="flex items-center gap-1.5 text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
+                                        <FileText className="w-4 h-4" /> Questions DOCX
+                                      </a>
+                                    ) : (
+                                      <span className="flex items-center gap-1.5 text-blue-500 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-lg text-xs font-bold">
+                                        <FileText className="w-4 h-4" /> Questions DOCX
+                                        <span className="text-[10px] font-normal opacity-60 ml-1">(being prepared)</span>
+                                      </span>
+                                    )}
+                                    {mi.solutionsDownloadUrl ? (
+                                      <a href={getPdfUrl(mi.solutionsDownloadUrl)} target="_blank" rel="noopener noreferrer"
+                                        className="flex items-center gap-1.5 text-green-700 bg-green-50 hover:bg-green-100 border border-green-200 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
+                                        <FileText className="w-4 h-4" /> Solutions PDF
+                                      </a>
+                                    ) : (
+                                      <span className="flex items-center gap-1.5 text-green-500 bg-green-50 border border-green-100 px-3 py-1.5 rounded-lg text-xs font-bold">
+                                        <FileText className="w-4 h-4" /> Solutions PDF
+                                        <span className="text-[10px] font-normal opacity-60 ml-1">(being prepared)</span>
+                                      </span>
+                                    )}
+                                  </div>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-xs text-orange-500 bg-orange-50 px-3 py-2 rounded-lg border border-orange-100 font-bold">Pending Admin Approval — files will appear once order is confirmed</p>
+                          )}
+                        </>
                       ) : (
-                        <p className="text-xs text-gray-500 italic">No specific chapters listed.</p>
+                        // Product — existing chapter download UI
+                        <>
+                          <p className="text-xs font-bold text-gray-600 mb-3 uppercase tracking-wider">
+                            Included Chapters ({item.chapters.length})
+                          </p>
+                          {item.chapters.length > 0 ? (
+                            <ul className="space-y-2">
+                              {item.chapters.map((ch: any, idx: number) => (
+                                <li key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm text-gray-700 bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                                  <div className="flex items-center gap-2.5">
+                                    <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                                    <span className="leading-snug font-medium">{ch.name}</span>
+                                  </div>
+                                  {(item.status === 'completed' || item.paymentStatus === 'paid') && ch.pdfUrl ? (
+                                    <a href={getPdfUrl(ch.pdfUrl)} target="_blank" rel="noopener noreferrer"
+                                      className="text-green-700 bg-green-50 hover:bg-green-100 border border-green-200 px-4 py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center sm:justify-start gap-1.5 whitespace-nowrap">
+                                      <DownloadCloud className="w-4 h-4" /> Download
+                                    </a>
+                                  ) : item.status !== 'completed' && item.paymentStatus !== 'paid' ? (
+                                    <span className="text-orange-500 bg-orange-50 px-3 py-1.5 rounded-lg text-xs font-bold border border-orange-100 whitespace-nowrap">Pending Admin Approval</span>
+                                  ) : null}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-xs text-gray-500 italic">No specific chapters listed.</p>
+                          )}
+                        </>
                       )}
                     </div>
                   )}

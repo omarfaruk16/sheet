@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, Tag, Layers, ShoppingCart, Users, LogOut, ReceiptText } from 'lucide-react';
+import { LayoutDashboard, Package, Tag, Layers, ShoppingCart, Users, LogOut, ReceiptText, FlaskConical } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { clearAdminSession, getAdminInfo } from '@/lib/adminAuth';
@@ -14,6 +14,7 @@ export function cn(...inputs: ClassValue[]) {
 const navItems = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'Products', href: '/admin/products', icon: Package },
+  { name: 'Model Tests', href: '/admin/model-tests', icon: FlaskConical },
   { name: 'Categories', href: '/admin/categories', icon: Layers },
   { name: 'Tags', href: '/admin/tags', icon: Tag },
   { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },
@@ -34,7 +35,7 @@ export default function AdminSidebar() {
   return (
     <aside className="w-64 bg-white border-r min-h-screen flex flex-col">
       <div className="p-6 border-b">
-        <h1 className="text-2xl font-bold text-green-600 tracking-tight">LeafSheets Admin</h1>
+        <h1 className="text-2xl font-bold text-green-600 tracking-tight">Orbit Sheet Admin</h1>
         {adminInfo && (
           <p className="text-xs text-gray-400 mt-1 truncate">@{adminInfo.username}</p>
         )}

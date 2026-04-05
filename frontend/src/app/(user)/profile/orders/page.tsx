@@ -20,9 +20,16 @@ export default function OrdersPage() {
   const [resultHandled, setResultHandled] = useState(false);
 
   useEffect(() => {
-    const fetchOrders = async () => {
+    const fetchOrders = async (retryCount = 0) => {
       const token = await getAccessToken();
       if (!token) {
+        // If coming from payment result, wait a bit for auth to rehydrate
+        const params = new URLSearchParams(window.location.search);
+        const fromPayment = params.get('paymentStatus');
+        if (fromPayment && retryCount < 3) {
+          setTimeout(() => fetchOrders(retryCount + 1), 1000);
+          return;
+        }
         router.push('/login?redirect=/profile/orders');
         return;
       }

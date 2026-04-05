@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, Filter, Bell, Zap, Star, Bookmark, ShoppingCart, BookOpen, User } from 'lucide-react';
+import { Search, Filter, Bell, Zap, Star, Bookmark, ShoppingCart, BookOpen, User, FlaskConical, FileArchive, FileText } from 'lucide-react';
 import axios from 'axios';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -18,6 +18,7 @@ const getImageUrl = (url?: string) => {
 
 export default function HomePage() {
   const [products, setProducts] = useState<any[]>([]);
+  const [modelTests, setModelTests] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -35,12 +36,14 @@ export default function HomePage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [prodRes, catRes] = await Promise.all([
+        const [prodRes, catRes, mtRes] = await Promise.all([
           axios.get(`${API_URL}/products`),
           axios.get(`${API_URL}/categories`),
+          axios.get(`${API_URL}/model-tests`),
         ]);
         setProducts(prodRes.data);
         setCategories(catRes.data);
+        setModelTests(mtRes.data);
       } catch (err) {
         console.error(err);
       } finally {
@@ -158,7 +161,7 @@ export default function HomePage() {
         <div className="flex justify-between items-end mb-4">
           <div>
             <h3 className="text-lg font-black text-gray-900 leading-tight">
-              {search ? `Results for "${search}"` : 'All Products ✨'}
+              {search ? `Results for "${search}"` : 'All Sheets ✨'}
             </h3>
             <p className="text-xs text-gray-500">{filtered.length} sheet{filtered.length !== 1 ? 's' : ''} available</p>
           </div>
@@ -178,9 +181,9 @@ export default function HomePage() {
             <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <BookOpen className="w-10 h-10 text-gray-400" />
             </div>
-            <h4 className="text-lg font-bold text-gray-700 mb-1">No Products Found</h4>
+            <h4 className="text-lg font-bold text-gray-700 mb-1">No Sheets Found</h4>
             <p className="text-sm text-gray-400">
-              {search ? 'Try a different search term.' : 'Products will appear here once added from the admin panel.'}
+              {search ? 'Try a different search term.' : 'Sheets will appear here once added from the admin panel.'}
             </p>
           </div>
         ) : (
@@ -242,6 +245,74 @@ export default function HomePage() {
                         onClick={e => { e.preventDefault(); }}
                         className="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center shadow-md hover:bg-green-600 transition-colors"
                       >
+                        <ShoppingCart className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Model Tests Section */}
+      <div className="px-6 mb-8">
+        <div className="flex justify-between items-end mb-4">
+          <div>
+            <h3 className="text-lg font-black text-gray-900 leading-tight">Model Tests 🧪</h3>
+            <p className="text-xs text-gray-500">{modelTests.length} test{modelTests.length !== 1 ? 's' : ''} available</p>
+          </div>
+          <Link href="/model-tests" className="text-xs font-bold text-purple-500 hover:text-purple-600 transition-colors bg-purple-50 px-3 py-1.5 rounded-full">
+            See All
+          </Link>
+        </div>
+
+        {loading ? (
+          <div className="flex flex-col gap-4">
+            {[1, 2].map(i => (<div key={i} className="h-36 bg-gray-100 rounded-3xl animate-pulse" />))}
+          </div>
+        ) : modelTests.length === 0 ? (
+          <div className="text-center py-8 px-4">
+            <div className="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-3">
+              <FlaskConical className="w-8 h-8 text-purple-300" />
+            </div>
+            <p className="text-sm text-gray-400">No model tests available yet.</p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {modelTests.slice(0, 4).map((mt: any) => {
+              const displayPrice = mt.discountPrice || mt.allItemsPrice || mt.regularPrice;
+              const hasDiscount = mt.discountPrice && mt.regularPrice > mt.discountPrice;
+              return (
+                <Link key={mt._id || mt.id} href={`/model-tests/${mt._id || mt.id}`}
+                  className="bg-white p-3 rounded-3xl shadow-sm border border-gray-100 flex gap-4 transition-all hover:shadow-md hover:border-purple-100 active:scale-[0.98]">
+                  <div className="w-24 h-32 shrink-0 rounded-2xl overflow-hidden relative bg-gray-100 shadow-inner">
+                    {mt.coverImage ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={getImageUrl(mt.coverImage)} alt={mt.title} className="w-full h-full object-cover"
+                        onError={e => { (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1596496181871-9681eacf9764?w=300&q=80'; }} />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-300"><FlaskConical className="w-10 h-10" /></div>
+                    )}
+                    <div className="absolute top-2 left-2 bg-purple-600/90 backdrop-blur text-[9px] font-bold px-2 py-1 rounded-full text-white shadow-sm">TEST</div>
+                  </div>
+                  <div className="flex flex-col py-1 justify-between flex-1 min-w-0">
+                    <div>
+                      <h4 className="font-bold text-gray-900 leading-snug text-sm mb-1 pr-2 line-clamp-2">{mt.title}</h4>
+                      <p className="text-xs text-gray-400 mb-1">{mt.category?.name || 'Model Test'} · {mt.items?.length || 0} items</p>
+                      <div className="flex items-center gap-2 text-[10px]">
+                        <span className="flex items-center gap-0.5 text-blue-500"><FileArchive className="w-3 h-3" /> ZIP</span>
+                        <span className="flex items-center gap-0.5 text-green-500"><FileText className="w-3 h-3" /> PDF</span>
+                        <span className="text-gray-400">per item</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between mt-auto">
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-lg font-black text-purple-600">৳{displayPrice?.toFixed(2)}</span>
+                        {hasDiscount && <span className="text-xs text-gray-400 line-through">৳{mt.regularPrice?.toFixed(2)}</span>}
+                      </div>
+                      <button onClick={e => e.preventDefault()} className="w-8 h-8 rounded-full bg-purple-900 text-white flex items-center justify-center shadow-md hover:bg-purple-600 transition-colors">
                         <ShoppingCart className="w-4 h-4" />
                       </button>
                     </div>

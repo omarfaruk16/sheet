@@ -3,7 +3,7 @@ import BottomNav from '@/components/BottomNav';
 import HeaderMenu from '@/components/HeaderMenu';
 
 export const metadata: Metadata = {
-  title: 'LeafSheets - Your Premium PDF Library',
+  title: 'Orbit Sheet - Your Premium PDF Library',
   description: 'Download premium guides, sheets, and books.',
 };
 

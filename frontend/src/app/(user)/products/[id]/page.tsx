@@ -9,6 +9,7 @@ import axios from 'axios';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { getLocalSession } from '@/lib/userSession';
+import AuthModal from '@/components/AuthModal';
 
 const getImageUrl = (url?: string) => {
   if (!url) return 'https://images.unsplash.com/photo-1544716278-e513176f20b5?w=400&q=80';
@@ -22,7 +23,6 @@ export default function ProductDetailsPage() {
   const params = useParams();
   const productId = params.id as string;
   const fallbackCoverImage = 'https://images.unsplash.com/photo-1544716278-e513176f20b5?w=400&q=80';
-  const loginHref = `/login?redirect=${encodeURIComponent(`/products/${productId}`)}`;
 
   const [product, setProduct] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('chapters');
@@ -218,9 +218,37 @@ export default function ProductDetailsPage() {
   };
 
   const handleBuyNow = async () => {
+    if (!product) return;
+    if (!requireAuth('Please log in to purchase.')) return;
     setIsAddingToCart(true);
     try {
-      handleAddToCart();
+      // Resolve chapters
+      let resolvedChapters: { name: string; pdfUrl: string; price: number }[] = [];
+      if (isAllSelected) {
+        resolvedChapters = (product.chapters || []).map((c: any) => ({ name: c.name, pdfUrl: c.pdfUrl, price: c.price }));
+      } else {
+        resolvedChapters = selectedChapters
+          .map(chId => product.chapters.find((c: any) => c._id === chId))
+          .filter(Boolean)
+          .map((c: any) => ({ name: c.name, pdfUrl: c.pdfUrl, price: c.price }));
+      }
+      const buyNowItem = [{
+        id: Math.random().toString(36).substr(2, 9),
+        productId: product._id,
+        productTitle: product.title,
+        cover: product.coverImage,
+        price: calculateTotal(),
+        chapters: resolvedChapters,
+        isAllChapters: isAllSelected,
+        headerLeftText: customInfo.headerName,
+        headerRightText: customInfo.headerEmail,
+        watermarkText: customInfo.watermarkText,
+        coverPageText: customInfo.coverText,
+      }];
+      // Save customization preference for next time
+      localStorage.setItem('leafsheets_customPrefs', JSON.stringify(customInfo));
+      // Write buy-now item — checkout will use this instead of the cart
+      localStorage.setItem('leafsheets_buynow', JSON.stringify(buyNowItem));
       router.push('/checkout');
     } finally {
       setIsAddingToCart(false);
@@ -482,9 +510,12 @@ export default function ProductDetailsPage() {
                   </div>
                   <h4 className="text-base font-bold text-gray-900 mb-1">Login Required</h4>
                   <p className="text-xs text-gray-600 mb-4">Sign in to unlock the details for this product.</p>
-                  <Link href={loginHref} className="inline-flex items-center justify-center bg-green-500 hover:bg-green-400 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-colors">
-                    Go to Login
-                  </Link>
+                  <button
+                    onClick={() => setShowLoginModal(true)}
+                    className="inline-flex items-center justify-center bg-green-500 hover:bg-green-400 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-colors"
+                  >
+                    Sign In
+                  </button>
                 </div>
               </div>
             )}
@@ -492,32 +523,24 @@ export default function ProductDetailsPage() {
         )}
       </div>
 
-      {showLoginModal && (
-        <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm flex items-center justify-center p-6">
-          <div className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl border border-gray-100">
-            <div className="w-12 h-12 rounded-full bg-green-100 text-green-700 mx-auto flex items-center justify-center mb-4">
-              <Lock className="w-5 h-5" />
-            </div>
-            <h3 className="text-lg font-bold text-gray-900 text-center">You need to login first</h3>
-            <p className="text-sm text-gray-500 text-center mt-2">Please login to access product details and customization features.</p>
-
-            <div className="mt-6 grid grid-cols-2 gap-3">
-              <button
-                onClick={() => setShowLoginModal(false)}
-                className="py-2.5 rounded-xl bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200 transition-colors"
-              >
-                Not now
-              </button>
-              <Link
-                href={loginHref}
-                className="py-2.5 rounded-xl bg-green-500 text-white text-sm font-semibold text-center hover:bg-green-400 transition-colors"
-              >
-                Login
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
+      <AuthModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onSuccess={() => {
+          // Re-read auth state after successful login inside the modal
+          const localSession = getLocalSession();
+          if (localSession?.user) {
+            setCurrentUser({
+              uid: localSession.user.uid,
+              email: localSession.user.email,
+              displayName: localSession.user.name,
+              authProvider: 'local',
+            });
+          } else if (auth.currentUser) {
+            setCurrentUser(auth.currentUser);
+          }
+        }}
+      />
 
       {/* Floating Bottom Bar */}
       <div className="fixed bottom-16 md:bottom-0 left-0 right-0 max-w-5xl mx-auto bg-white border-t border-gray-100 p-4 pb-safe z-30 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] flex items-center justify-between">

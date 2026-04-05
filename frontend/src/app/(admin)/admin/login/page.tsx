@@ -43,7 +43,7 @@ export default function AdminLoginPage() {
             <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-green-200 mb-4">
               <Leaf className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">LeafSheets Admin</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Orbit Sheet Admin</h1>
             <p className="text-sm text-gray-500 mt-1">Sign in to manage your store</p>
           </div>
 
@@ -120,7 +120,7 @@ export default function AdminLoginPage() {
           </form>
 
           <p className="text-center text-xs text-gray-400 mt-6">
-            Admin access only · LeafSheets &copy; {new Date().getFullYear()}
+            Admin access only · Orbit Sheet &copy; {new Date().getFullYear()}
           </p>
         </div>
       </div>

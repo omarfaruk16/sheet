@@ -17,6 +17,7 @@ import adminAuthRoutes from './routes/adminAuthRoutes';
 import adminPasswordRoutes from './routes/adminPasswordRoutes';
 import settingsRoutes from './routes/settingsRoutes';
 import paymentRoutes from './routes/paymentRoutes';
+import modelTestRoutes from './routes/modelTestRoutes';
 const envCandidates = [
   path.resolve(process.cwd(), '../.env'),
   path.resolve(process.cwd(), '.env'),
@@ -124,10 +125,11 @@ app.use('/api/users', userRoutes);
 app.use('/api/admin', adminAuthRoutes);
 app.use('/api/admin', adminPasswordRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/model-tests', modelTestRoutes);
 
 // Health check
 app.get('/', (req, res) => {
-  res.send('LeafSheets API is running...');
+  res.send('Orbit Sheet API is running...');
 });
 
 app.listen(PORT, async () => {
