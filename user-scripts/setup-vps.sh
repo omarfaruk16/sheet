@@ -5,9 +5,9 @@ set -Eeuo pipefail
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd)"
 
-DOMAIN="${DEPLOY_DOMAIN:-orbitacademyonline.com}"
+DOMAIN="${DEPLOY_DOMAIN:-documents.orbitacademyonline.com}"
 WWW_DOMAIN="www.${DOMAIN}"
-SITE_NAME="${NGINX_SITE_NAME:-orbitacademyonline.com}"
+SITE_NAME="${NGINX_SITE_NAME:-documents.orbitacademyonline.com}"
 LETSENCRYPT_EMAIL="${LETSENCRYPT_EMAIL:-admin@${DOMAIN}}"
 
 # SSL_MODE: auto|origin|letsencrypt|http

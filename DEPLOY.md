@@ -22,7 +22,7 @@ What this script does:
 2. Resets environment file every time:
 3. `rm -f .env`
 4. `cp .env.example.production .env`
-5. Configures Nginx for `orbitacademyonline.com` and `www.orbitacademyonline.com`.
+5. Configures Nginx for `documents.orbitacademyonline.com` and `www.documents.orbitacademyonline.com`.
 6. Configures SSL in one of these modes:
 7. Cloudflare Origin Certificate (`SSL_MODE=origin`) if both cert and key files exist.
 8. Let's Encrypt (`SSL_MODE=letsencrypt` or default auto fallback).
@@ -137,8 +137,8 @@ Recommendation:
 ### DNS
 
 1. Keep proxied `A` records:
-2. `orbitacademyonline.com -> 82.112.238.218` (Proxied)
-3. `www -> 82.112.238.218` (Proxied)
+2. `documents -> 82.112.238.218` (Proxied)
+3. `www.documents -> 82.112.238.218` (Proxied) if used
 4. Remove invalid `AAAA` records that point to `100::` unless that is a real reachable IPv6 origin
 
 ### Caching -> Cache Rules (important)
@@ -188,5 +188,5 @@ systemctl status nginx
 
 curl -I http://127.0.0.1:3001
 curl -I http://127.0.0.1:5000
-curl -I https://orbitacademyonline.com
+curl -I https://documents.orbitacademyonline.com
 ```
