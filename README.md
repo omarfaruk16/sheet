@@ -1,57 +1,62 @@
-# LeafSheets Docker + SSLCommerz Setup
+# LeafSheets Deployment and Runtime
 
-This repository now includes a Dockerized stack with:
+This repository uses Docker Compose with:
 
-- `frontend` (Next.js)
-- `backend` (Express + Prisma)
-- `postgres` (PostgreSQL 16)
-- `nginx` (reverse proxy)
+1. `frontend` (Next.js)
+2. `backend` (Express + Prisma)
+3. `postgres` (PostgreSQL 16)
 
-It also includes SSLCommerz integration (sandbox for local, live for production via env values).
+Nginx is managed on VPS host (not inside Docker) for domain routing and SSL.
 
-## 1) Choose environment template
+## VPS runbook (your flow)
 
-Copy one of the root env templates:
+Run directly on VPS:
 
 ```bash
-cp .env.example.local .env
-# or
+ssh root@82.112.238.218
+cd /root/sheet
+chmod +x user-scripts/*.sh
+```
+
+First setup:
+
+```bash
+./user-scripts/setup-vps.sh
+```
+
+Redeploy updates:
+
+```bash
+./user-scripts/pullNredeploy.sh
+```
+
+Both scripts enforce:
+
+```bash
+rm -f .env
 cp .env.example.production .env
 ```
 
-## 2) Build and run containers
+Then build and run containers.
+
+For detailed Cloudflare + SSL instructions, see `DEPLOY.md`.
+
+## Local development quick start
 
 ```bash
+cp .env.example.local .env
 docker compose up --build -d
 ```
 
-## 3) Open app
+## Service ports (defaults)
 
-- App URL: `http://localhost`
-- API URL through nginx: `http://localhost/api`
-- Direct frontend URL: `http://localhost:3000` (Next rewrites proxy `/api`, `/uploads`, `/downloads` to backend)
-
-Ports can be changed from root `.env`:
-
-- `NGINX_HOST_PORT` / `NGINX_CONTAINER_PORT`
-- `FRONTEND_HOST_PORT` / `FRONTEND_CONTAINER_PORT`
-- `BACKEND_HOST_PORT` / `BACKEND_CONTAINER_PORT`
-- `POSTGRES_HOST_PORT` / `POSTGRES_CONTAINER_PORT`
-- `BACKEND_ADMIN_EMAIL` / `BACKEND_ADMIN_USERNAME` / `BACKEND_ADMIN_PASSWORD`
-- `BACKEND_SERVER_URL` (frontend-side proxy target for `/api`, `/uploads`, `/downloads`)
-
-## 4) Important env files
-
-- Root templates only: `.env.example.local`, `.env.example.production`
-- Runtime expects `.env` at workspace root (`./.env`) for local frontend/backend commands.
+1. Frontend: `3000`
+2. Backend: `5000`
+3. PostgreSQL: `5433` (host) -> `5432` (container)
 
 ## Notes
 
-- Prisma datasource is PostgreSQL now.
-- Backend creates SSLCommerz payment sessions from `/api/payments/sslcommerz/init`.
-- SSLCommerz callbacks are handled under `/api/payments/sslcommerz/*`.
-- On successful validation, orders are marked paid and PDF generation is triggered.
-- Override payment endpoints with `SSLCOMMERZ_BASE_URL`, `SSLCOMMERZ_SESSION_API_URL`, and `SSLCOMMERZ_VALIDATION_API_URL` when needed.
-- On backend start/restart, service checks env-defined admin identity and creates it if missing.
-- On subsequent restarts, admin credentials (email and password) are synced with env-defined values.
+1. Backend APIs are under `/api/*`.
+2. SSLCommerz endpoints are under `/api/payments/sslcommerz/*`.
+3. Prisma uses PostgreSQL in this setup.
 

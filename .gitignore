@@ -1,0 +1,6 @@
+.env
+user-scripts/cloudflare-origin.key
+user-scripts/cloudflare-origin.crt
+*.pem
+*.key
+*.crt
