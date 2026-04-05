@@ -75,15 +75,10 @@ For `Full (strict)` you must have a valid origin certificate on VPS:
 
 ### Using Cloudflare Origin Certificate in script
 
-Store certificate files on VPS only (do not keep private key in git):
+Place certificate files here (already in repo if you pulled latest):
 
-```bash
-mkdir -p /root/.secrets
-nano /root/.secrets/cloudflare-origin.crt
-nano /root/.secrets/cloudflare-origin.key
-chmod 600 /root/.secrets/cloudflare-origin.key
-chmod 644 /root/.secrets/cloudflare-origin.crt
-```
+1. [user-scripts/cloudflare-origin.crt](user-scripts/cloudflare-origin.crt)
+2. [user-scripts/cloudflare-origin.key](user-scripts/cloudflare-origin.key)
 
 `setup-vps.sh` checks these default paths in `auto` mode.
 
@@ -191,7 +186,7 @@ nginx -t
 systemctl reload nginx
 systemctl status nginx
 
-curl -I http://127.0.0.1:3000
+curl -I http://127.0.0.1:3001
 curl -I http://127.0.0.1:5000
 curl -I https://orbitacademyonline.com
 ```

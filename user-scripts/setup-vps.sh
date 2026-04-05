@@ -12,8 +12,8 @@ LETSENCRYPT_EMAIL="${LETSENCRYPT_EMAIL:-admin@${DOMAIN}}"
 
 # SSL_MODE: auto|origin|letsencrypt|http
 SSL_MODE="${SSL_MODE:-auto}"
-CF_ORIGIN_CERT_PATH="${CF_ORIGIN_CERT_PATH:-/root/.secrets/cloudflare-origin.crt}"
-CF_ORIGIN_KEY_PATH="${CF_ORIGIN_KEY_PATH:-/root/.secrets/cloudflare-origin.key}"
+CF_ORIGIN_CERT_PATH="${CF_ORIGIN_CERT_PATH:-$SCRIPT_DIR/cloudflare-origin.crt}"
+CF_ORIGIN_KEY_PATH="${CF_ORIGIN_KEY_PATH:-$SCRIPT_DIR/cloudflare-origin.key}"
 CF_SSL_DIR="/etc/ssl/cloudflare"
 
 log() {

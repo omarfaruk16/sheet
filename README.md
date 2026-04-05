@@ -50,7 +50,7 @@ docker compose up --build -d
 
 ## Service ports (defaults)
 
-1. Frontend: `3000`
+1. Frontend: `3001`
 2. Backend: `5000`
 3. PostgreSQL: `5433` (host) -> `5432` (container)
 
