@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Search, Filter, BookOpen, ShoppingCart, FlaskConical, FileArchive, FileText } from 'lucide-react';
 import axios from 'axios';
@@ -76,6 +76,57 @@ export default function HomePage() {
     return currentUser.displayName || currentUser.email?.split('@')[0] || 'User';
   };
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const banners = [
+    {
+      id: 1,
+      theme: 'from-green-700 to-emerald-900',
+      tagColor: 'text-green-200',
+      title: 'Sheet Bundle 2024',
+      desc: 'Comprehensive HSC formula sheets & suggestion books at 30% off.',
+      buttonText: 'text-green-800 hover:bg-green-50',
+      image: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=800&q=80',
+    },
+    {
+      id: 2,
+      theme: 'from-orange-700 to-orange-900',
+      tagColor: 'text-orange-200',
+      title: 'Model Test Prep',
+      desc: 'Get 40% off on all physics model tests.',
+      buttonText: 'text-orange-800 hover:bg-orange-50',
+      image: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=800&q=80',
+    },
+    {
+      id: 3,
+      theme: 'from-blue-700 to-blue-900',
+      tagColor: 'text-blue-200',
+      title: 'Chemistry Pack',
+      desc: 'Complete chemistry notes for HSC 2024.',
+      buttonText: 'text-blue-800 hover:bg-blue-50',
+      image: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=800&q=80',
+    }
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (scrollContainerRef.current) {
+        const container = scrollContainerRef.current;
+        const firstChild = container.firstElementChild as HTMLElement;
+        if (!firstChild) return;
+        
+        const scrollAmount = firstChild.clientWidth + 16; // 16px is gap-4
+        
+        if (container.scrollLeft + container.clientWidth >= container.scrollWidth - 10) {
+          container.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+          container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        }
+      }
+    }, 2000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <div className="min-h-screen bg-white pb-20">
 
@@ -99,35 +150,30 @@ export default function HomePage() {
       </div>
 
       {/* Hero Banner */}
-      <div className="px-6 mb-8 flex gap-4">
-        <div className="relative w-full h-40 rounded-3xl overflow-hidden shadow-lg bg-gradient-to-br from-green-700 to-emerald-900">
-          <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=800&q=80)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
-          <div className="absolute inset-0 p-6 flex flex-col justify-center">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-[10px] font-bold text-white uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-sm">Offer</span>
-              <span className="text-[10px] font-bold text-green-200 uppercase tracking-wider">Exam Season</span>
+      <div className="px-6 mb-8">
+        <div 
+          ref={scrollContainerRef}
+          className="flex gap-4 overflow-x-auto snap-x snap-mandatory hide-scrollbar scroll-smooth"
+        >
+          {banners.map((banner) => (
+            <div 
+              key={banner.id} 
+              className={`relative w-full md:w-[calc(50%-0.5rem)] shrink-0 snap-center h-40 rounded-3xl overflow-hidden shadow-lg bg-gradient-to-br ${banner.theme}`}
+            >
+              <div className="absolute inset-0 opacity-20" style={{ backgroundImage: `url(${banner.image})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+              <div className="absolute inset-0 p-6 flex flex-col justify-center">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-[10px] font-bold text-white uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-sm">Offer</span>
+                  <span className={`text-[10px] font-bold uppercase tracking-wider ${banner.tagColor}`}>Exam Season</span>
+                </div>
+                <h3 className="text-xl font-bold text-white mb-1">{banner.title}</h3>
+                <p className={`text-xs mb-4 max-w-[220px] ${banner.tagColor.replace('text-', 'text-').replace('-200', '-100')}`}>{banner.desc}</p>
+                <button className={`bg-white text-xs font-bold px-4 py-2 rounded-full self-start shadow-sm transition-colors ${banner.buttonText}`}>
+                  View Collection
+                </button>
+              </div>
             </div>
-            <h3 className="text-xl font-bold text-white mb-1">Sheet Bundle 2024</h3>
-            <p className="text-xs text-green-100 mb-4 max-w-[220px]">Comprehensive HSC formula sheets &amp; suggestion books at 30% off.</p>
-            <button className="bg-white hover:bg-green-50 text-green-800 text-xs font-bold px-4 py-2 rounded-full self-start shadow-sm transition-colors">
-              View Collection
-            </button>
-          </div>
-        </div>
-
-        <div className="relative w-full h-40 rounded-3xl overflow-hidden shadow-lg bg-gradient-to-br from-orange-700 to-orange-900">
-          <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=800&q=80)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
-          <div className="absolute inset-0 p-6 flex flex-col justify-center">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-[10px] font-bold text-white uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-sm">Offer</span>
-              <span className="text-[10px] font-bold text-orange-200 uppercase tracking-wider">Exam Season</span>
-            </div>
-            <h3 className="text-xl font-bold text-white mb-1">Sheet Bundle 2024</h3>
-            <p className="text-xs text-orange-100 mb-4 max-w-[220px]">Comprehensive HSC formula sheets &amp; suggestion books at 30% off.</p>
-            <button className="bg-white hover:bg-orange-50 text-orange-800 text-xs font-bold px-4 py-2 rounded-full self-start shadow-sm transition-colors">
-              View Collection
-            </button>
-          </div>
+          ))}
         </div>
       </div>
 
