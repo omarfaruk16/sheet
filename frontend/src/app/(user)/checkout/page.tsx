@@ -262,7 +262,7 @@ export default function CheckoutPage() {
                 onChange={e => setCouponCode(e.target.value.toUpperCase())}
                 onKeyDown={e => e.key === 'Enter' && handleApplyCoupon()}
                 placeholder="Enter coupon code"
-                className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all font-mono tracking-widest uppercase"
+                className="flex-1 min-w-0 px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all font-mono tracking-widest uppercase w-full"
               />
               <button
                 onClick={handleApplyCoupon}

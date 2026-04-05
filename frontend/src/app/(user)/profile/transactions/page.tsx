@@ -37,6 +37,26 @@ export default function TransactionsPage() {
   const [selectedOrder, setSelectedOrder] = useState<TransactionRecord | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [resultHandled, setResultHandled] = useState(false);
+  const [retryingOrderId, setRetryingOrderId] = useState<string | null>(null);
+
+  const handleRetryPayment = async (orderId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      setRetryingOrderId(orderId);
+      const token = await getAccessToken();
+      const res = await axios.post(`${API_URL}/payments/sslcommerz/retry/${orderId}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data?.gatewayUrl) {
+        toast.success('Redirecting to payment gateway...');
+        window.location.href = res.data.gatewayUrl;
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to retry payment');
+    } finally {
+      setRetryingOrderId(null);
+    }
+  };
 
   useEffect(() => {
     const fetchTransactions = async () => {
@@ -204,7 +224,18 @@ export default function TransactionsPage() {
                     <ReceiptText className="w-4 h-4" />
                     {tx.paymentGateway || 'SSLCommerz'}
                   </span>
-                  <span className="font-bold text-gray-900">{Number(tx.amount || 0).toFixed(2)}</span>
+                  <div className="flex items-center gap-4">
+                    <span className="font-bold text-gray-900">৳{Number(tx.amount || 0).toFixed(2)}</span>
+                    {(tx.paymentStatus === 'failed' || tx.paymentStatus === 'cancelled') && (
+                      <button
+                        onClick={(e) => handleRetryPayment(tx.orderId, e)}
+                        disabled={retryingOrderId === tx.orderId}
+                        className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-3 py-1.5 rounded-full disabled:opacity-50 transition-colors shadow-sm"
+                      >
+                        {retryingOrderId === tx.orderId ? 'Wait...' : 'Pay again'}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </button>
             ))}
