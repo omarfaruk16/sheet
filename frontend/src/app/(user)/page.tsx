@@ -6,6 +6,7 @@ import { Search, Filter, BookOpen, ShoppingCart, FlaskConical, FileArchive, File
 import axios from 'axios';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import { InstallAppButton } from '@/components/InstallAppButton';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -370,6 +371,7 @@ export default function HomePage() {
         )}
       </div>
 
+      <InstallAppButton />
     </div>
   );
 }
