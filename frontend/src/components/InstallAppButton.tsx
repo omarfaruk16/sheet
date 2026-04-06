@@ -31,19 +31,13 @@ export function InstallAppButton() {
     };
   }, []);
 
-  const handleInstallClick = async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === "accepted") {
-        setDeferredPrompt(null);
-        setIsInstallable(false);
-      }
-    } else if (isIOS) {
-      alert("To install the app on iOS, tap the share icon at the bottom of the screen and select 'Add to Home Screen'.");
-    } else {
-      alert("App can be installed from your browser settings or it is already installed.");
-    }
+  const handleInstallClick = () => {
+    const link = document.createElement("a");
+    link.href = "/Orbit Sheet - All education materials in one place.apk";
+    link.download = "OrbitSheet.apk"; // optional rename
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // Always show button to ensure requirement is met, handle click appropriately based on state
@@ -51,7 +45,7 @@ export function InstallAppButton() {
     <div className="flex justify-center my-12 relative z-50">
       <button
         onClick={handleInstallClick}
-        className="group flex items-center gap-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 px-8 rounded-full shadow-xl transition-all duration-300 transform hover:scale-105"
+        className="group flex items-center gap-3 bg-gradient-to-r from-green-300 to-green-400 hover:from-green-400 hover:to-green-500 text-white font-bold py-4 px-8 rounded-full shadow-xl transition-all duration-300 transform hover:scale-105"
       >
         <Download className="w-6 h-6 animate-bounce group-hover:animate-none" />
         <span className="text-lg">Download App</span>
