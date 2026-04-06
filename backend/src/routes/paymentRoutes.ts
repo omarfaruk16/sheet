@@ -31,6 +31,11 @@ const parseAmount = (amount: unknown) => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 };
 
+const resolveSslCommerzMinAmount = () => {
+  const parsed = Number(process.env.SSLCOMMERZ_MIN_AMOUNT || '10');
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 10;
+};
+
 // @desc    Start SSLCommerz payment session
 // @route   POST /api/payments/sslcommerz/init
 // @access  Private
@@ -52,6 +57,14 @@ router.post('/sslcommerz/init', protect, async (req, res) => {
       return res.status(400).json({ message: 'Invalid amount.' });
     }
 
+    const minGatewayAmount = resolveSslCommerzMinAmount();
+    const isFree = req.body.totalAmount === 0;
+    if (!isFree && totalAmount < minGatewayAmount) {
+      return res.status(400).json({
+        message: `Minimum payable amount is ${minGatewayAmount.toFixed(2)} BDT.`,
+      });
+    }
+
     for (const item of req.body.items) {
       const isModelTest = Boolean(item?.modelTestId);
       const isProduct = Boolean(item?.productId);
@@ -64,7 +77,6 @@ router.post('/sslcommerz/init', protect, async (req, res) => {
     const tranId = `LS-${Date.now()}-${crypto.randomUUID().substring(0, 6).toUpperCase()}`;
 
     // Handle 0 amount (e.g. 100% coupon)
-    const isFree = req.body.totalAmount === 0;
 
     const createdOrder = await (prisma as any).order.create({
       data: {
@@ -234,6 +246,13 @@ router.post('/sslcommerz/retry/:orderId', protect, async (req, res) => {
     const totalAmount = Number(order.totalAmount);
     if (!totalAmount || totalAmount <= 0) {
       return res.status(400).json({ message: 'Invalid amount for retry.' });
+    }
+
+    const minGatewayAmount = resolveSslCommerzMinAmount();
+    if (totalAmount < minGatewayAmount) {
+      return res.status(400).json({
+        message: `Minimum payable amount is ${minGatewayAmount.toFixed(2)} BDT.`,
+      });
     }
 
     const tranId = `LS-${Date.now()}-${crypto.randomUUID().substring(0, 6).toUpperCase()}`;

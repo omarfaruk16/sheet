@@ -91,15 +91,28 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
     const desiredRole = isAdminEmail ? 'admin' : 'user';
 
     if (!user) {
-      user = await prisma.user.create({
-        data: {
-          uid: uid,
-          email: decodedToken.email || `${uid}@noemail.com`,
-          name: decodedToken.name || decodedToken.email?.split('@')[0] || 'User',
-          authProvider: 'firebase',
-          role: desiredRole,
+      try {
+        user = await prisma.user.create({
+          data: {
+            uid: uid,
+            email: decodedToken.email || `${uid}@noemail.com`,
+            name: decodedToken.name || decodedToken.email?.split('@')[0] || 'User',
+            authProvider: 'firebase',
+            role: desiredRole,
+          }
+        });
+      } catch (error: any) {
+        // Concurrent first-login requests can race on unique uid.
+        if (error?.code === 'P2002') {
+          user = await prisma.user.findUnique({ where: { uid } });
+        } else {
+          throw error;
         }
-      });
+      }
+
+      if (!user) {
+        return res.status(401).json({ message: 'Not authorized, token failed' });
+      }
     } else {
       if (isAdminEmail && user.role !== 'admin') {
         user = await prisma.user.update({ where: { id: user.id }, data: { role: 'admin' } });
