@@ -144,6 +144,29 @@ export default function ProfilePage() {
             </p>
           </div>
         </div>
+        {/* App Download Card */}
+        <div className="mt-6 bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
+          <div className="relative z-10 flex flex-col gap-4">
+            <div>
+              <h3 className="text-xl font-black tracking-tight mb-1">Orbit Sheet</h3>
+              <p className="text-gray-400 text-xs font-bold uppercase tracking-widest italic">Your Premium PDF Library</p>
+            </div>
+            <p className="text-gray-300 text-sm leading-relaxed max-w-[200px]">
+              Take your library anywhere. Experience the best way to read and manage your PDFs.
+            </p>
+            <a
+              href="#"
+              onClick={(e) => { e.preventDefault(); toast.success('App release coming soon!'); }} 
+              className="w-fit bg-white text-gray-900 px-6 py-3 rounded-2xl font-bold text-sm shadow-lg shadow-white/10 hover:bg-green-50 transition-colors flex items-center gap-2"
+            >
+              <Download className="w-4 h-4" /> Download App
+            </a>
+          </div>
+          <div className="absolute -bottom-6 -right-6 text-white/10 rotate-12">
+            <Download className="w-24 h-24" />
+          </div>
+        </div>
       </div>
 
       {/* Menu Items */}

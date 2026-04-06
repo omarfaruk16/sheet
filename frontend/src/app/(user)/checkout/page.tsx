@@ -214,17 +214,7 @@ export default function CheckoutPage() {
 
       <div className="px-6 space-y-6">
 
-        {/* Total Price Card */}
-        <div className="bg-green-500 rounded-3xl p-6 text-white text-center shadow-lg shadow-green-500/30">
-          <p className="text-green-100 text-[11px] font-bold uppercase tracking-wider mb-1">Amount to Pay</p>
-          <h2 className="text-4xl font-black">৳{total.toFixed(2)}</h2>
-          {appliedCoupon && (
-            <p className="text-green-200 text-xs mt-1 font-semibold">
-              🎉 Saved ৳{discountAmount.toFixed(2)} with coupon <span className="font-black">{appliedCoupon.code}</span>
-            </p>
-          )}
-          <p className="text-green-200 text-xs mt-0.5">{items.length} item(s)</p>
-        </div>
+
 
         {/* Coupon Code Section */}
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5">

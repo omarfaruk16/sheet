@@ -151,7 +151,7 @@ router.post('/sslcommerz/init', protect, async (req, res) => {
 
     const backendBaseUrl = getBackendBaseUrl();
 
-    const initResponse = await initSslCommerzPayment({
+    const initData = {
       total_amount: totalAmount!.toFixed(2),
       currency: createdOrder.currency,
       tran_id: tranId,
@@ -170,7 +170,11 @@ router.post('/sslcommerz/init', protect, async (req, res) => {
       cus_country: 'Bangladesh',
       cus_phone: createdOrder.customerPhone || '01700000000',
       shipping_method: 'NO',
-    });
+    };
+
+    console.log(`[SSLCommerz] Initializing payment for Order: ${orderId}, Amount: ${initData.total_amount} ${initData.currency}`);
+
+    const initResponse = await initSslCommerzPayment(initData);
 
     if (initResponse.status !== 'SUCCESS' || !initResponse.GatewayPageURL) {
       await prisma.order.update({
@@ -182,8 +186,10 @@ router.post('/sslcommerz/init', protect, async (req, res) => {
         },
       });
 
+      console.error(`[SSLCommerz] Failed to initialize payment: ${initResponse.failedreason || 'SSLCommerz session error'}`);
       return res.status(502).json({
         message: initResponse.failedreason || 'Failed to initialize SSLCommerz payment.',
+        status: initResponse.status,
       });
     }
 
