@@ -93,7 +93,7 @@ export default function BottomNav() {
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
-          
+
           return (
             <Link
               key={item.href}
@@ -101,11 +101,11 @@ export default function BottomNav() {
               className="flex flex-col items-center gap-1 group w-16"
             >
               <div className="relative">
-                <Icon 
+                <Icon
                   className={cn(
-                    "w-6 h-6 transition-all duration-200", 
+                    "w-6 h-6 transition-all duration-200",
                     isActive ? "text-green-500 scale-110" : "text-gray-400 group-hover:text-gray-600"
-                  )} 
+                  )}
                 />
                 {item.name === 'Library' && libraryCount > 0 && (
                   <span className="absolute -top-1 -right-2 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white shadow-sm">
