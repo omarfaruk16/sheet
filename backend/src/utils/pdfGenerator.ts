@@ -83,19 +83,14 @@ export const generateCustomPdf = async (orderId: string) => {
                 color: rgb(1, 1, 1)
               });
 
-              const nameToPrint = item.headerLeftText || '';
-              const emailToPrint = item.headerRightText || '';
               const specialMsg = item.coverPageText || "";
 
               const lines = specialMsg.split('\n');
               let currY = boxY + boxHeight - 30;
               for (const line of lines) {
-                page.drawText(line, { x: boxX + 20, y: currY, size: 14, font: boldFont, color: rgb(0, 0, 0) });
+                page.drawText(line, { x: boxX + 20, y: currY, size: 18, font: boldFont, color: rgb(0, 0, 0) });
                 currY -= 16;
               }
-
-              page.drawText(nameToPrint, { x: boxX + 20, y: boxY + boxHeight - 60, size: 16, font: regularFont, color: rgb(0, 0, 0) });
-              page.drawText(emailToPrint, { x: boxX + 20, y: boxY + boxHeight - 80, size: 12, font: regularFont, color: rgb(0.2, 0.2, 0.2) });
             }
 
             // --- Task 2: Header on EVERY page ---

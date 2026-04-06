@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, Tag, Layers, ShoppingCart, Users, LogOut, ReceiptText, FlaskConical } from 'lucide-react';
+import { LayoutDashboard, Package, Tag, Layers, ShoppingCart, Users, LogOut, ReceiptText, FlaskConical, Ticket } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { clearAdminSession, getAdminInfo } from '@/lib/adminAuth';
@@ -13,12 +13,13 @@ export function cn(...inputs: ClassValue[]) {
 
 const navItems = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-  { name: 'Products', href: '/admin/products', icon: Package },
+  { name: 'Sheets', href: '/admin/products', icon: Package },
   { name: 'Model Tests', href: '/admin/model-tests', icon: FlaskConical },
   { name: 'Categories', href: '/admin/categories', icon: Layers },
   { name: 'Tags', href: '/admin/tags', icon: Tag },
   { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },
   { name: 'Transactions', href: '/admin/transactions', icon: ReceiptText },
+  { name: 'Coupons', href: '/admin/coupons', icon: Ticket },
   { name: 'Users', href: '/admin/users', icon: Users },
 ];
 

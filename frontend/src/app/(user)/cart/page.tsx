@@ -50,7 +50,7 @@ export default function CartPage() {
         <h2 className="text-xl font-bold text-gray-900 mb-2">Your cart is empty</h2>
         <p className="text-gray-500 mb-8 max-w-[250px]">Looks like you haven't added any premium sheets to your cart yet.</p>
         <Link href="/" className="bg-green-500 text-white font-bold py-3 px-8 rounded-full hover:bg-green-400 transition-colors shadow-sm">
-          Discover Sheets
+          Documents
         </Link>
       </div>
     );

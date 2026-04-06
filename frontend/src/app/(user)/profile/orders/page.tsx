@@ -38,7 +38,11 @@ export default function OrdersPage() {
         const res = await axios.get(`${API_URL}/orders/my`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        setOrders(res.data || []);
+        const allOrders = res.data || [];
+        const completedOrders = allOrders.filter((order: any) => 
+          order.paymentStatus === 'paid' || order.status === 'completed'
+        );
+        setOrders(completedOrders);
       } catch (err) {
         console.error('Failed to fetch orders:', err);
         toast.error('Failed to load orders');

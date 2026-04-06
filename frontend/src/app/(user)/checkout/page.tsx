@@ -3,12 +3,14 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, CheckCircle, ShieldCheck, FlaskConical, BookOpen } from 'lucide-react';
+import { ArrowLeft, CheckCircle, ShieldCheck, FlaskConical, BookOpen, Tag, X, Loader2, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { getAccessToken, getActiveUser, getLocalSession } from '@/lib/userSession';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -17,6 +19,16 @@ export default function CheckoutPage() {
   const [isBuyNow, setIsBuyNow] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authReady, setAuthReady] = useState(false);
+
+  // Coupon state
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    type: string;
+    value: number;
+    discountAmount: number;
+  } | null>(null);
+  const [couponLoading, setCouponLoading] = useState(false);
 
   useEffect(() => {
     const syncAuthState = () => {
@@ -51,7 +63,6 @@ export default function CheckoutPage() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        // Accept both product items (have productId) and model test items (have modelTestId)
         const validItems = parsed.filter((it: any) => it && (it.productId || it.modelTestId));
         if (validItems.length !== parsed.length) {
           localStorage.setItem('leafsheets_cart', JSON.stringify(validItems));
@@ -64,7 +75,41 @@ export default function CheckoutPage() {
   }, []);
 
   const subtotal = items.reduce((sum, item) => sum + (item.price || 0), 0);
-  const total = subtotal;
+  const discountAmount = appliedCoupon?.discountAmount || 0;
+  const total = Math.max(0, subtotal - discountAmount);
+
+  const handleApplyCoupon = async () => {
+    const trimmed = couponCode.trim().toUpperCase();
+    if (!trimmed) return toast.error('Please enter a coupon code.');
+    if (!isAuthenticated) return toast.error('Please log in to apply a coupon.');
+
+    setCouponLoading(true);
+    try {
+      const token = await getAccessToken();
+      const res = await axios.post(
+        `${API_URL}/coupons/validate`,
+        { code: trimmed, subtotal },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (res.data.valid) {
+        const { coupon, discountAmount } = res.data;
+        setAppliedCoupon({ code: coupon.code, type: coupon.type, value: coupon.value, discountAmount });
+        toast.success(`Coupon applied! You save ৳${discountAmount.toFixed(2)}`);
+      }
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || 'Invalid coupon code.';
+      toast.error(msg);
+      setAppliedCoupon(null);
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode('');
+    toast.success('Coupon removed.');
+  };
 
   const handlePlaceOrder = async () => {
     if (!items.length) return toast.error('Your cart is empty.');
@@ -118,6 +163,8 @@ export default function CheckoutPage() {
         subtotal,
         serviceFee: 0,
         totalAmount: total,
+        couponCode: appliedCoupon?.code || null,
+        couponDiscount: appliedCoupon?.discountAmount || 0,
         customerName: activeUser?.name || activeUser?.email?.split('@')[0] || 'Customer',
         customerEmail: activeUser?.email || '',
         customerPhone: '',
@@ -126,7 +173,7 @@ export default function CheckoutPage() {
       };
 
       const res = await axios.post(
-        process.env.NEXT_PUBLIC_API_URL + '/payments/sslcommerz/init',
+        `${API_URL}/payments/sslcommerz/init`,
         orderData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -167,11 +214,55 @@ export default function CheckoutPage() {
 
       <div className="px-6 space-y-6">
 
-        {/* Total Price Card */}
-        <div className="bg-green-500 rounded-3xl p-6 text-white text-center shadow-lg shadow-green-500/30">
-          <p className="text-green-100 text-[11px] font-bold uppercase tracking-wider mb-1">Amount to Pay</p>
-          <h2 className="text-4xl font-black">৳{total.toFixed(2)}</h2>
-          <p className="text-green-200 text-xs mt-1">{items.length} item(s)</p>
+
+
+        {/* Coupon Code Section */}
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Tag className="w-4 h-4 text-orange-500" />
+            <h3 className="text-sm font-bold text-gray-800">Coupon Code</h3>
+          </div>
+
+          {appliedCoupon ? (
+            <div className="flex items-center justify-between bg-green-50 border border-green-200 border-dashed rounded-2xl px-4 py-3">
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-green-600" />
+                <div>
+                  <p className="text-sm font-bold text-green-700">{appliedCoupon.code}</p>
+                  <p className="text-xs text-green-600">
+                    {appliedCoupon.type === 'percent'
+                      ? `${appliedCoupon.value}% off`
+                      : `৳${appliedCoupon.value} off`}
+                    {' — saving ৳'}{discountAmount.toFixed(2)}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleRemoveCoupon}
+                className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={couponCode}
+                onChange={e => setCouponCode(e.target.value.toUpperCase())}
+                onKeyDown={e => e.key === 'Enter' && handleApplyCoupon()}
+                placeholder="Enter coupon code"
+                className="flex-1 min-w-0 px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all font-mono tracking-widest uppercase w-full"
+              />
+              <button
+                onClick={handleApplyCoupon}
+                disabled={couponLoading || !couponCode.trim()}
+                className="px-5 py-3 bg-orange-500 hover:bg-orange-400 disabled:bg-gray-300 text-white font-bold rounded-2xl transition-colors flex items-center gap-2 text-sm shrink-0"
+              >
+                {couponLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply'}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Order Summary */}
@@ -203,6 +294,24 @@ export default function CheckoutPage() {
                 );
               })}
             </ul>
+
+            {/* Price Breakdown */}
+            <div className="px-5 py-4 border-t border-gray-100 space-y-2">
+              <div className="flex justify-between text-sm text-gray-500">
+                <span>Subtotal</span>
+                <span>৳{subtotal.toFixed(2)}</span>
+              </div>
+              {appliedCoupon && (
+                <div className="flex justify-between text-sm text-green-600 font-semibold">
+                  <span>Coupon ({appliedCoupon.code})</span>
+                  <span>-৳{discountAmount.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-base font-black text-gray-900 pt-1 border-t border-gray-100">
+                <span>Total</span>
+                <span>৳{total.toFixed(2)}</span>
+              </div>
+            </div>
           </div>
         )}
 

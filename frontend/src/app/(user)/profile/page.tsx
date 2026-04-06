@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Settings, Download, Heart, Clock, ShieldCheck, ChevronRight, LogOut, HelpCircle, Lock, Wallet } from 'lucide-react';
+import { Settings, Download, Heart, Clock, ChevronRight, LogOut, HelpCircle, Wallet } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import axios from 'axios';
@@ -55,13 +55,15 @@ export default function ProfilePage() {
       } else {
         setCurrentUser(null);
         setOrderCount(0);
+        // Redirect to login when not authenticated
+        router.push('/login');
       }
 
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [router]);
 
   const handleLogout = async () => {
     try {
@@ -142,6 +144,29 @@ export default function ProfilePage() {
             </p>
           </div>
         </div>
+        {/* App Download Card */}
+        <div className="mt-6 bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
+          <div className="relative z-10 flex flex-col gap-4">
+            <div>
+              <h3 className="text-xl font-black tracking-tight mb-1">Orbit Sheet</h3>
+              <p className="text-gray-400 text-xs font-bold uppercase tracking-widest italic">Your Premium PDF Library</p>
+            </div>
+            <p className="text-gray-300 text-sm leading-relaxed max-w-[200px]">
+              Take your library anywhere. Experience the best way to read and manage your PDFs.
+            </p>
+            <a
+              href="#"
+              onClick={(e) => { e.preventDefault(); toast.success('App release coming soon!'); }} 
+              className="w-fit bg-white text-gray-900 px-6 py-3 rounded-2xl font-bold text-sm shadow-lg shadow-white/10 hover:bg-green-50 transition-colors flex items-center gap-2"
+            >
+              <Download className="w-4 h-4" /> Download App
+            </a>
+          </div>
+          <div className="absolute -bottom-6 -right-6 text-white/10 rotate-12">
+            <Download className="w-24 h-24" />
+          </div>
+        </div>
       </div>
 
       {/* Menu Items */}
@@ -181,32 +206,19 @@ export default function ProfilePage() {
           <ChevronRight className="w-5 h-5 text-gray-400" />
         </Link>
 
-        {/* Verified Purchases */}
-        <Link href="/profile/purchases" className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition">
-          <div className="flex items-center gap-3">
-            <ShieldCheck className="w-5 h-5 text-green-600" />
-            <span className="font-medium">Verified Purchases</span>
-          </div>
-          <ChevronRight className="w-5 h-5 text-gray-400" />
-        </Link>
-
-        {/* Security Settings */}
-        <Link href="/profile/security" className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition">
-          <div className="flex items-center gap-3">
-            <Lock className="w-5 h-5 text-purple-600" />
-            <span className="font-medium">Security Settings</span>
-          </div>
-          <ChevronRight className="w-5 h-5 text-gray-400" />
-        </Link>
-
-        {/* Help & Support */}
-        <Link href="/support" className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition">
+        {/* Help & Support - WhatsApp */}
+        <a
+          href="https://wa.me/8801518405600"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition"
+        >
           <div className="flex items-center gap-3">
             <HelpCircle className="w-5 h-5 text-orange-600" />
             <span className="font-medium">Help & Support</span>
           </div>
           <ChevronRight className="w-5 h-5 text-gray-400" />
-        </Link>
+        </a>
 
         {/* Logout */}
         <button
