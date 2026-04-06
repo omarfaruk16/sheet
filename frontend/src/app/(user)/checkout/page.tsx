@@ -74,7 +74,7 @@ export default function CheckoutPage() {
     }
   }, []);
 
-  const subtotal = items.reduce((sum, item) => sum + (item.price || 0), 0);
+  const subtotal = items.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
   const discountAmount = appliedCoupon?.discountAmount || 0;
   const total = Math.max(0, subtotal - discountAmount);
 
@@ -86,18 +86,44 @@ export default function CheckoutPage() {
     setCouponLoading(true);
     try {
       const token = await getAccessToken();
+      if (!token) {
+        toast.error('Session expired. Please log in again.');
+        setAppliedCoupon(null);
+        return;
+      }
+
       const res = await axios.post(
         `${API_URL}/coupons/validate`,
         { code: trimmed, subtotal },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      if (res.data.valid) {
-        const { coupon, discountAmount } = res.data;
-        setAppliedCoupon({ code: coupon.code, type: coupon.type, value: coupon.value, discountAmount });
-        toast.success(`Coupon applied! You save ৳${discountAmount.toFixed(2)}`);
+      if (!res.data?.valid) {
+        toast.error(res.data?.message || 'Invalid coupon code.');
+        setAppliedCoupon(null);
+        return;
       }
+
+      const coupon = res.data?.coupon;
+      const parsedDiscountAmount = Number(res.data?.discountAmount);
+      if (!coupon || !coupon.code || !Number.isFinite(parsedDiscountAmount)) {
+        toast.error('Coupon response is invalid. Please try again.');
+        setAppliedCoupon(null);
+        return;
+      }
+
+      setAppliedCoupon({
+        code: coupon.code,
+        type: coupon.type,
+        value: Number(coupon.value) || 0,
+        discountAmount: parsedDiscountAmount,
+      });
+      toast.success(`Coupon applied! You save ৳${parsedDiscountAmount.toFixed(2)}`);
     } catch (err: any) {
-      const msg = err?.response?.data?.message || 'Invalid coupon code.';
+      const status = err?.response?.status;
+      const msg =
+        status === 401
+          ? 'Session expired. Please log in again.'
+          : err?.response?.data?.message || 'Invalid coupon code.';
       toast.error(msg);
       setAppliedCoupon(null);
     } finally {

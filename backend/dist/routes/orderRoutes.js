@@ -37,10 +37,10 @@ router.post('/', authMiddleware_1.protect, async (req, res) => {
         if (!req.body.items || !req.body.items.length) {
             return res.status(400).json({ message: 'Your cart is empty.' });
         }
-        // Validate that all items have a valid productId (legacy poisoned carts from before interceptor might lack it)
+        // Check that product items have a valid productId
         for (const item of req.body.items) {
-            if (!item.productId) {
-                return res.status(400).json({ message: 'Invalid product ID in cart. Please clear your cart and add the product again.' });
+            if (!item.productId && !item.modelTestId) {
+                return res.status(400).json({ message: 'Invalid item in cart: missing productId or modelTestId.' });
             }
         }
         const orderId = `ORD-${crypto_1.default.randomUUID().substring(0, 8).toUpperCase()}`;
@@ -52,6 +52,8 @@ router.post('/', authMiddleware_1.protect, async (req, res) => {
                 subtotal: req.body.subtotal,
                 serviceFee: req.body.serviceFee || 0,
                 totalAmount: req.body.totalAmount,
+                couponCode: req.body.couponCode || null,
+                couponDiscount: req.body.couponDiscount || 0,
                 fulfillmentMethod: req.body.fulfillmentMethod || 'digital',
                 paymentMethod: req.body.paymentMethod,
                 paymentGateway: req.body.paymentGateway || 'manual',
@@ -62,27 +64,54 @@ router.post('/', authMiddleware_1.protect, async (req, res) => {
                 customerEmail: req.body.customerEmail,
                 customerPhone: req.body.customerPhone,
                 items: {
-                    create: req.body.items.map((item) => ({
-                        productTitle: item.productTitle,
-                        price: item.price,
-                        isAllChapters: item.isAllChapters,
-                        headerLeftText: item.headerLeftText,
-                        headerRightText: item.headerRightText,
-                        watermarkText: item.watermarkText,
-                        coverPageText: item.coverPageText,
-                        downloadUrl: item.downloadUrl,
-                        product: { connect: { id: item.productId } },
-                        chaptersItem: {
-                            create: (item.chapters || []).map((ch) => ({
-                                name: ch.name,
-                                pdfUrl: ch.pdfUrl,
-                                price: Number(ch.price)
-                            }))
-                        }
-                    }))
+                    create: req.body.items.map((item) => {
+                        const isModelTest = Boolean(item.modelTestId);
+                        return {
+                            productTitle: item.productTitle,
+                            price: item.price,
+                            isAllChapters: item.isAllChapters,
+                            headerLeftText: item.headerLeftText,
+                            headerRightText: item.headerRightText,
+                            watermarkText: item.watermarkText,
+                            coverPageText: item.coverPageText,
+                            downloadUrl: item.downloadUrl,
+                            ...(isModelTest
+                                ? { modelTest: { connect: { id: item.modelTestId } } }
+                                : { product: { connect: { id: item.productId } } }),
+                            chaptersItem: !isModelTest ? {
+                                create: (item.chapters || []).map((ch) => ({
+                                    name: ch.name,
+                                    pdfUrl: ch.pdfUrl,
+                                    price: Number(ch.price)
+                                }))
+                            } : undefined,
+                            modelTestOrderItems: isModelTest ? {
+                                create: (item.modelTestItems || []).map((mi) => ({
+                                    name: mi.name,
+                                    questionsDocxUrl: mi.questionsDocxUrl,
+                                    solutionPdfUrl: mi.solutionPdfUrl,
+                                    price: Number(mi.price),
+                                    ...(mi.modelTestItemId ? { modelTestItem: { connect: { id: mi.modelTestItemId } } } : {}),
+                                }))
+                            } : undefined,
+                        };
+                    })
                 }
             }
         });
+        // Increment coupon usage count if a coupon was applied
+        if (req.body.couponCode) {
+            try {
+                await prisma_1.prisma.coupon.update({
+                    where: { code: req.body.couponCode.trim().toUpperCase() },
+                    data: { usedCount: { increment: 1 } },
+                });
+            }
+            catch (e) {
+                // Non-fatal: coupon may have been deleted between validate and order
+                console.warn('Could not increment coupon usedCount:', e);
+            }
+        }
         res.status(201).json(createdOrder);
     }
     catch (error) {
@@ -101,14 +130,37 @@ router.get('/my/downloads', authMiddleware_1.protect, async (req, res) => {
                 OR: [{ paymentStatus: 'paid' }, { status: 'completed' }],
             },
             orderBy: { createdAt: 'desc' },
-            include: { items: { include: { product: true, chaptersItem: true } } },
+            include: {
+                items: {
+                    include: {
+                        product: true,
+                        chaptersItem: true,
+                        modelTest: true,
+                        modelTestOrderItems: true,
+                    }
+                }
+            },
         });
         const orders = rawOrders
             .map((o) => ({
             ...o,
             items: o.items
-                .map((i) => ({ ...i, chapters: i.chaptersItem, productId: i.product || i.productId }))
-                .filter((i) => Boolean(i.downloadUrl) || (Array.isArray(i.chapters) && i.chapters.some((ch) => Boolean(ch?.pdfUrl)))),
+                .map((i) => {
+                const isModelTest = Boolean(i.modelTestId);
+                return {
+                    ...i,
+                    itemType: isModelTest ? 'modelTest' : 'product',
+                    chapters: i.chaptersItem,
+                    modelTestItems: i.modelTestOrderItems,
+                    productId: i.product || i.productId,
+                };
+            })
+                .filter((i) => {
+                if (i.itemType === 'modelTest') {
+                    return Array.isArray(i.modelTestItems) && i.modelTestItems.length > 0;
+                }
+                return Boolean(i.downloadUrl) || (Array.isArray(i.chapters) && i.chapters.some((ch) => Boolean(ch?.pdfUrl)));
+            }),
         }))
             .filter((o) => o.items.length > 0);
         res.json(orders);
@@ -125,11 +177,19 @@ router.get('/my', authMiddleware_1.protect, async (req, res) => {
         const rawOrders = await prisma_1.prisma.order.findMany({
             where: { userId: req.user?.uid },
             orderBy: { createdAt: 'desc' },
-            include: { items: { include: { product: true, chaptersItem: true } } }
+            include: {
+                items: { include: { product: true, chaptersItem: true, modelTest: true, modelTestOrderItems: true } }
+            }
         });
         const orders = rawOrders.map((o) => ({
             ...o,
-            items: o.items.map((i) => ({ ...i, chapters: i.chaptersItem, productId: i.product || i.productId }))
+            items: o.items.map((i) => ({
+                ...i,
+                itemType: i.modelTestId ? 'modelTest' : 'product',
+                chapters: i.chaptersItem,
+                modelTestItems: i.modelTestOrderItems,
+                productId: i.product || i.productId,
+            }))
         }));
         res.json(orders);
     }
@@ -162,11 +222,19 @@ router.get('/', authMiddleware_1.protect, authMiddleware_1.admin, async (req, re
     try {
         const rawOrders = await prisma_1.prisma.order.findMany({
             orderBy: { createdAt: 'desc' },
-            include: { items: { include: { product: true, chaptersItem: true } } }
+            include: {
+                items: { include: { product: true, chaptersItem: true, modelTest: true, modelTestOrderItems: true } }
+            }
         });
         const orders = rawOrders.map((o) => ({
             ...o,
-            items: o.items.map((i) => ({ ...i, chapters: i.chaptersItem, productId: i.product }))
+            items: o.items.map((i) => ({
+                ...i,
+                itemType: i.modelTestId ? 'modelTest' : 'product',
+                chapters: i.chaptersItem,
+                modelTestItems: i.modelTestOrderItems,
+                productId: i.product,
+            }))
         }));
         res.json(orders);
     }
@@ -201,6 +269,7 @@ router.put('/:id/complete', authMiddleware_1.protect, authMiddleware_1.admin, as
         });
         // In background, generate customized PDFs for this order
         (0, pdfGenerator_1.generateCustomPdf)(order.id).catch(console.error);
+        (0, pdfGenerator_1.generateModelTestPdf)(order.id).catch(console.error);
         res.json(order);
     }
     catch (error) {

@@ -24,17 +24,77 @@ export default function DiscoverPage() {
   const [activeTab, setActiveTab] = useState<Tab>('products');
   const [loading, setLoading] = useState(true);
 
+  const normalizeArray = (value: any): any[] => {
+    if (Array.isArray(value)) return value;
+    if (Array.isArray(value?.data)) return value.data;
+    if (Array.isArray(value?.items)) return value.items;
+    if (Array.isArray(value?.products)) return value.products;
+    return [];
+  };
+
+  const getEntityId = (entity: any) => entity?._id || entity?.id;
+
+  const addProductToCart = (event: React.MouseEvent, prod: any) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const chapters = Array.isArray(prod?.chapters)
+      ? prod.chapters.map((ch: any) => ({
+          name: ch?.name,
+          pdfUrl: ch?.pdfUrl,
+          price: Number(ch?.price) || 0,
+        }))
+      : [];
+
+    const cartItem = {
+      id: Math.random().toString(36).substr(2, 9),
+      itemType: 'product',
+      productId: getEntityId(prod),
+      productTitle: prod?.title || 'PDF Sheet',
+      cover: prod?.coverImage,
+      price: Number(prod?.discountPrice ?? prod?.allChaptersPrice ?? prod?.regularPrice ?? 0),
+      chapters,
+      isAllChapters: true,
+      headerLeftText: '',
+      headerRightText: '',
+      watermarkText: '',
+      coverPageText: '',
+    };
+
+    if (!cartItem.productId) {
+      return;
+    }
+
+    const existing = JSON.parse(localStorage.getItem('leafsheets_cart') || '[]');
+    localStorage.setItem('leafsheets_cart', JSON.stringify([...existing, cartItem]));
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [prodRes, catRes, mtRes] = await Promise.all([
+        const [prodRes, catRes, mtRes] = await Promise.allSettled([
           axios.get(`${API_URL}/products`),
           axios.get(`${API_URL}/categories`),
           axios.get(`${API_URL}/model-tests`),
         ]);
-        setProducts(prodRes.data);
-        setCategories(catRes.data);
-        setModelTests(mtRes.data);
+
+        if (prodRes.status === 'fulfilled') {
+          setProducts(normalizeArray(prodRes.value.data));
+        } else {
+          setProducts([]);
+        }
+
+        if (catRes.status === 'fulfilled') {
+          setCategories(normalizeArray(catRes.value.data));
+        } else {
+          setCategories([]);
+        }
+
+        if (mtRes.status === 'fulfilled') {
+          setModelTests(normalizeArray(mtRes.value.data));
+        } else {
+          setModelTests([]);
+        }
       } catch (err) {
         console.error(err);
       } finally {
@@ -49,7 +109,7 @@ export default function DiscoverPage() {
 
   const filterByCat = (item: any) =>
     activeCategory
-      ? item.category?._id === activeCategory || item.categoryId === activeCategory
+      ? (item?.category?._id || item?.category?.id || item?.categoryId || item?.category) === activeCategory
       : true;
 
   const filteredProducts = products.filter(p => filterBySearch(p) && filterByCat(p));
@@ -118,9 +178,12 @@ export default function DiscoverPage() {
             </button>
             {categories.map((cat: any) => (
               <button
-                key={cat._id}
-                onClick={() => setActiveCategory(activeCategory === cat._id ? null : cat._id)}
-                className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all ${activeCategory === cat._id ? 'bg-green-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                key={getEntityId(cat)}
+                onClick={() => {
+                  const id = getEntityId(cat);
+                  setActiveCategory(activeCategory === id ? null : id);
+                }}
+                className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all ${activeCategory === getEntityId(cat) ? 'bg-green-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
               >
                 <span>{cat.icon || '📚'}</span> {cat.name}
               </button>
@@ -150,7 +213,7 @@ export default function DiscoverPage() {
                 const hasDiscount = prod.discountPrice && prod.regularPrice > prod.discountPrice;
                 const displayPrice = prod.discountPrice || prod.allChaptersPrice || prod.regularPrice;
                 return (
-                  <Link key={prod._id} href={`/products/${prod._id}`}
+                  <Link key={getEntityId(prod)} href={`/products/${getEntityId(prod)}`}
                     className="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-3 transition-all hover:shadow-md hover:border-green-100 active:scale-[0.98]">
                     <div className="w-full aspect-[3/4] rounded-xl overflow-hidden relative bg-gray-50">
                       {prod.coverImage ? (
@@ -174,9 +237,12 @@ export default function DiscoverPage() {
                           <span className="text-sm font-black text-green-600">৳{displayPrice?.toFixed(2)}</span>
                           {hasDiscount && <span className="text-[10px] text-gray-400 line-through ml-1">৳{prod.regularPrice?.toFixed(2)}</span>}
                         </div>
-                        <div className="w-7 h-7 rounded-full bg-gray-900 text-white flex items-center justify-center hover:bg-green-600 transition-colors">
+                        <button
+                          onClick={(e) => addProductToCart(e, prod)}
+                          className="w-7 h-7 rounded-full bg-gray-900 text-white flex items-center justify-center hover:bg-green-600 transition-colors"
+                        >
                           <ShoppingCart className="w-3.5 h-3.5" />
-                        </div>
+                        </button>
                       </div>
                     </div>
                   </Link>

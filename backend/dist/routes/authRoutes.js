@@ -33,16 +33,30 @@ router.post('/sync', authMiddleware_1.protect, async (req, res) => {
         }
         let user = await prisma_1.prisma.user.findUnique({ where: { uid: firebaseUser.uid } });
         if (!user) {
-            user = await prisma_1.prisma.user.create({
-                data: {
-                    uid: firebaseUser.uid,
-                    name: req.body.name || firebaseUser.name || 'User',
-                    email: firebaseUser.email || req.body.email,
-                    authProvider: 'firebase',
-                    phone: req.body.phone || null,
-                    address: req.body.address || null,
+            try {
+                user = await prisma_1.prisma.user.create({
+                    data: {
+                        uid: firebaseUser.uid,
+                        name: req.body.name || firebaseUser.name || 'User',
+                        email: firebaseUser.email || req.body.email,
+                        authProvider: 'firebase',
+                        phone: req.body.phone || null,
+                        address: req.body.address || null,
+                    }
+                });
+            }
+            catch (error) {
+                // Parallel sync calls may attempt the same user creation.
+                if (error?.code === 'P2002') {
+                    user = await prisma_1.prisma.user.findUnique({ where: { uid: firebaseUser.uid } });
                 }
-            });
+                else {
+                    throw error;
+                }
+            }
+            if (!user) {
+                return res.status(500).json({ message: 'Server error during auth sync' });
+            }
         }
         else {
             // Update if details changed

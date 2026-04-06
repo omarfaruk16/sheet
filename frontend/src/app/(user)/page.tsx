@@ -26,6 +26,51 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<any>(null);
 
+  const normalizeArray = (value: any): any[] => {
+    if (Array.isArray(value)) return value;
+    if (Array.isArray(value?.data)) return value.data;
+    if (Array.isArray(value?.items)) return value.items;
+    if (Array.isArray(value?.products)) return value.products;
+    return [];
+  };
+
+  const getEntityId = (entity: any) => entity?._id || entity?.id;
+
+  const addProductToCart = (event: React.MouseEvent, prod: any) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const chapters = Array.isArray(prod?.chapters)
+      ? prod.chapters.map((ch: any) => ({
+          name: ch?.name,
+          pdfUrl: ch?.pdfUrl,
+          price: Number(ch?.price) || 0,
+        }))
+      : [];
+
+    const cartItem = {
+      id: Math.random().toString(36).substr(2, 9),
+      itemType: 'product',
+      productId: getEntityId(prod),
+      productTitle: prod?.title || 'PDF Sheet',
+      cover: prod?.coverImage,
+      price: Number(prod?.discountPrice ?? prod?.allChaptersPrice ?? prod?.regularPrice ?? 0),
+      chapters,
+      isAllChapters: true,
+      headerLeftText: '',
+      headerRightText: '',
+      watermarkText: '',
+      coverPageText: '',
+    };
+
+    if (!cartItem.productId) {
+      return;
+    }
+
+    const existing = JSON.parse(localStorage.getItem('leafsheets_cart') || '[]');
+    localStorage.setItem('leafsheets_cart', JSON.stringify([...existing, cartItem]));
+  };
+
   // Listen for Firebase auth state changes
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
@@ -37,14 +82,29 @@ export default function HomePage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [prodRes, catRes, mtRes] = await Promise.all([
+        const [prodRes, catRes, mtRes] = await Promise.allSettled([
           axios.get(`${API_URL}/products`),
           axios.get(`${API_URL}/categories`),
           axios.get(`${API_URL}/model-tests`),
         ]);
-        setProducts(prodRes.data);
-        setCategories(catRes.data);
-        setModelTests(mtRes.data);
+
+        if (prodRes.status === 'fulfilled') {
+          setProducts(normalizeArray(prodRes.value.data));
+        } else {
+          setProducts([]);
+        }
+
+        if (catRes.status === 'fulfilled') {
+          setCategories(normalizeArray(catRes.value.data));
+        } else {
+          setCategories([]);
+        }
+
+        if (mtRes.status === 'fulfilled') {
+          setModelTests(normalizeArray(mtRes.value.data));
+        } else {
+          setModelTests([]);
+        }
       } catch (err) {
         console.error(err);
       } finally {
@@ -56,7 +116,8 @@ export default function HomePage() {
 
   const filtered = products.filter(p => {
     const matchSearch = search ? p.title?.toLowerCase().includes(search.toLowerCase()) : true;
-    const matchCat = activeCategory ? (p.category?._id === activeCategory || p.category === activeCategory) : true;
+    const categoryId = p?.category?._id || p?.category?.id || p?.categoryId || p?.category;
+    const matchCat = activeCategory ? categoryId === activeCategory : true;
     return matchSearch && matchCat;
   });
 
@@ -191,9 +252,12 @@ export default function HomePage() {
             </button>
             {categories.map((cat: any) => (
               <button
-                key={cat._id}
-                onClick={() => setActiveCategory(activeCategory === cat._id ? null : cat._id)}
-                className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all ${activeCategory === cat._id ? 'bg-green-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                key={getEntityId(cat)}
+                onClick={() => {
+                  const id = getEntityId(cat);
+                  setActiveCategory(activeCategory === id ? null : id);
+                }}
+                className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all ${activeCategory === getEntityId(cat) ? 'bg-green-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
               >
                 <span>{cat.icon || '📚'}</span>
                 {cat.name}
@@ -240,8 +304,8 @@ export default function HomePage() {
               const displayPrice = prod.discountPrice || prod.allChaptersPrice || prod.regularPrice;
               return (
                 <Link
-                  key={prod._id}
-                  href={`/products/${prod._id}`}
+                  key={getEntityId(prod)}
+                  href={`/products/${getEntityId(prod)}`}
                   className="bg-white p-3 rounded-3xl shadow-sm border border-gray-100 flex gap-4 transition-all hover:shadow-md hover:border-green-100 active:scale-[0.98]"
                 >
                   {/* Cover */}
@@ -289,7 +353,7 @@ export default function HomePage() {
                         )}
                       </div>
                       <button
-                        onClick={e => { e.preventDefault(); }}
+                        onClick={e => addProductToCart(e, prod)}
                         className="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center shadow-md hover:bg-green-600 transition-colors"
                       >
                         <ShoppingCart className="w-4 h-4" />

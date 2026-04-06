@@ -53,6 +53,8 @@ const adminAuthRoutes_1 = __importDefault(require("./routes/adminAuthRoutes"));
 const adminPasswordRoutes_1 = __importDefault(require("./routes/adminPasswordRoutes"));
 const settingsRoutes_1 = __importDefault(require("./routes/settingsRoutes"));
 const paymentRoutes_1 = __importDefault(require("./routes/paymentRoutes"));
+const modelTestRoutes_1 = __importDefault(require("./routes/modelTestRoutes"));
+const couponRoutes_1 = __importDefault(require("./routes/couponRoutes"));
 const envCandidates = [
     path_1.default.resolve(process.cwd(), '../.env'),
     path_1.default.resolve(process.cwd(), '.env'),
@@ -148,9 +150,11 @@ app.use('/api/users', userRoutes_1.default);
 app.use('/api/admin', adminAuthRoutes_1.default);
 app.use('/api/admin', adminPasswordRoutes_1.default);
 app.use('/api/settings', settingsRoutes_1.default);
+app.use('/api/model-tests', modelTestRoutes_1.default);
+app.use('/api/coupons', couponRoutes_1.default);
 // Health check
 app.get('/', (req, res) => {
-    res.send('LeafSheets API is running...');
+    res.send('Orbit Sheet API is running...');
 });
 app.listen(PORT, async () => {
     // Seed default admin user if not present

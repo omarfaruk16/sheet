@@ -30,7 +30,10 @@ export default function ProfilePage() {
         const res = await axios.get(`${API_URL}/orders/my`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setOrderCount(Array.isArray(res.data) ? res.data.length : 0);
+        const successfulOrders = Array.isArray(res.data)
+          ? res.data.filter((order: any) => order?.status === 'completed' && order?.paymentStatus === 'paid')
+          : [];
+        setOrderCount(successfulOrders.length);
       } catch {
         setOrderCount(0);
       }

@@ -167,14 +167,6 @@ export default function ProductDetailsPage() {
   const handleAddToCart = () => {
     if (!product || isAddedToCart) return;
 
-    // Enforce minimum 7-character watermark
-    if (!customInfo.watermarkText || customInfo.watermarkText.trim().length < 7) {
-      setShowCustomization(true);
-      toast.error('Watermark name is required (at least 7 characters)');
-      setTimeout(() => window.scrollBy({ top: 300, behavior: 'smooth' }), 100);
-      return;
-    }
-
     setIsAddToCartAnimating(true);
     const finalPrice = calculateTotal();
     

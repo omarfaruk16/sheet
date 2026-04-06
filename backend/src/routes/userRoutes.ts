@@ -63,10 +63,20 @@ router.get('/', protect, admin, async (req, res) => {
 router.get('/stats', protect, admin, async (req, res) => {
   try {
     const totalUsers = await prisma.user.count();
-    const totalOrders = await prisma.order.count();
+    const totalOrders = await prisma.order.count({
+      where: {
+        status: 'completed',
+        paymentStatus: 'paid',
+      },
+    });
     
     // Calculate total income
-    const orders = await prisma.order.findMany({ where: { status: 'completed' } });
+    const orders = await prisma.order.findMany({
+      where: {
+        status: 'completed',
+        paymentStatus: 'paid',
+      },
+    });
     const totalIncome = orders.reduce((acc: number, order: any) => acc + order.totalAmount, 0);
 
     // Calculate repeated sales vs new sales (simplified)

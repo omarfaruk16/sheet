@@ -45,8 +45,6 @@ services:
     ports:
       - "${BACKEND_HOST_PORT:-5000}:${BACKEND_CONTAINER_PORT:-5000}"
     volumes:
-      - ./backend:/app
-      - /app/node_modules
       - backend_uploads:/app/uploads
       - backend_downloads:/app/public/downloads
     healthcheck:
@@ -83,10 +81,6 @@ services:
       BACKEND_SERVER_URL: http://backend:${BACKEND_CONTAINER_PORT:-5000}
     ports:
       - "${FRONTEND_HOST_PORT:-3000}:${FRONTEND_CONTAINER_PORT:-3000}"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-      - /app/.next
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:${FRONTEND_CONTAINER_PORT:-3000}"]
       interval: 10s

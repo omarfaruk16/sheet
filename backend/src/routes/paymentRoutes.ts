@@ -31,9 +31,16 @@ const parseAmount = (amount: unknown) => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 };
 
-const resolveSslCommerzMinAmount = () => {
-  const parsed = Number(process.env.SSLCOMMERZ_MIN_AMOUNT || '10');
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 10;
+const incrementCouponUsageIfPresent = async (couponCode?: string | null) => {
+  if (!couponCode) return;
+  try {
+    await (prisma as any).coupon.update({
+      where: { code: couponCode.trim().toUpperCase() },
+      data: { usedCount: { increment: 1 } },
+    });
+  } catch (e) {
+    console.warn('Could not increment coupon usedCount:', e);
+  }
 };
 
 // @desc    Start SSLCommerz payment session
@@ -57,13 +64,7 @@ router.post('/sslcommerz/init', protect, async (req, res) => {
       return res.status(400).json({ message: 'Invalid amount.' });
     }
 
-    const minGatewayAmount = resolveSslCommerzMinAmount();
     const isFree = req.body.totalAmount === 0;
-    if (!isFree && totalAmount < minGatewayAmount) {
-      return res.status(400).json({
-        message: `Minimum payable amount is ${minGatewayAmount.toFixed(2)} BDT.`,
-      });
-    }
 
     for (const item of req.body.items) {
       const isModelTest = Boolean(item?.modelTestId);
@@ -137,18 +138,9 @@ router.post('/sslcommerz/init', protect, async (req, res) => {
       },
     });
 
-    if (req.body.couponCode) {
-      try {
-        await (prisma as any).coupon.update({
-          where: { code: req.body.couponCode.trim().toUpperCase() },
-          data: { usedCount: { increment: 1 } },
-        });
-      } catch (e) {
-        console.warn('Could not increment coupon usedCount:', e);
-      }
-    }
-
     if (isFree) {
+      await incrementCouponUsageIfPresent(createdOrder.couponCode as string | null);
+
       // Background generate PDFs
       generateCustomPdf(createdOrder.id).catch(console.error);
       generateModelTestPdf(createdOrder.id).catch(console.error);
@@ -246,13 +238,6 @@ router.post('/sslcommerz/retry/:orderId', protect, async (req, res) => {
     const totalAmount = Number(order.totalAmount);
     if (!totalAmount || totalAmount <= 0) {
       return res.status(400).json({ message: 'Invalid amount for retry.' });
-    }
-
-    const minGatewayAmount = resolveSslCommerzMinAmount();
-    if (totalAmount < minGatewayAmount) {
-      return res.status(400).json({
-        message: `Minimum payable amount is ${minGatewayAmount.toFixed(2)} BDT.`,
-      });
     }
 
     const tranId = `LS-${Date.now()}-${crypto.randomUUID().substring(0, 6).toUpperCase()}`;
@@ -388,6 +373,8 @@ const finishPayment = async (tranId: string, valId?: string, rawPayload?: any) =
   generateCustomPdf(updated.id).catch((err) => {
     console.error('PDF generation failed after payment:', err);
   });
+
+  await incrementCouponUsageIfPresent(order.couponCode as string | null);
 
   // Also generate model test PDFs if any items have model test data
   generateModelTestPdf(updated.id).catch((err) => {

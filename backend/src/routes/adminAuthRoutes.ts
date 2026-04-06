@@ -85,7 +85,10 @@ router.get('/me', protectAdmin, async (req, res) => {
 router.get('/dashboard-stats', protectAdmin, async (req, res) => {
   try {
     const orders = await prisma.order.findMany({
-      where: { status: 'completed' },
+      where: {
+        status: 'completed',
+        paymentStatus: 'paid',
+      },
       select: { userId: true, totalAmount: true, createdAt: true }
     });
     
