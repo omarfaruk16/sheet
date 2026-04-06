@@ -114,7 +114,7 @@ export default function DownloadsLibrary() {
               headers: { Authorization: `Bearer ${token}` }
             });
             mapOrdersToLibrary(res.data || []);
-          } catch(e) {}
+          } catch (e) { }
         };
 
         loadOrders();
@@ -136,7 +136,7 @@ export default function DownloadsLibrary() {
       const normalizedStatus = paymentStatus.toLowerCase();
       if (['paid', 'success'].includes(normalizedStatus)) {
         localStorage.removeItem('leafsheets_cart');
-        
+
         // Remove query params to hide 'paymentStatus=paid' from URL
         const url = new URL(window.location.href);
         url.searchParams.delete('paymentStatus');
@@ -166,13 +166,13 @@ export default function DownloadsLibrary() {
       </div>
 
       <div className="px-6 space-y-6">
-        
+
         {/* Search Bar */}
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input 
-            type="text" 
-            placeholder="Search your downloads..." 
+          <input
+            type="text"
+            placeholder="Search your downloads..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-100 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-green-500 transition-all shadow-sm"
@@ -181,19 +181,19 @@ export default function DownloadsLibrary() {
 
         {/* Tabs */}
         <div className="flex gap-2 p-1.5 bg-gray-100/70 rounded-2xl">
-          <button 
+          <button
             onClick={() => setActiveTab('all')}
             className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${activeTab === 'all' ? 'bg-white shadow border border-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
           >
             All
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('product')}
             className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${activeTab === 'product' ? 'bg-white shadow border border-gray-100 text-green-600' : 'text-gray-500 hover:text-gray-700'}`}
           >
             Sheets
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('modelTest')}
             className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${activeTab === 'modelTest' ? 'bg-white shadow border border-gray-100 text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
           >
@@ -211,8 +211,8 @@ export default function DownloadsLibrary() {
             filtered.map((item) => {
               const isExpanded = expandedItems[item.id];
               return (
-                <div 
-                  key={item.id} 
+                <div
+                  key={item.id}
                   onClick={(e) => toggleExpand(item.id, e)}
                   className={`bg-white rounded-3xl shadow-sm border flex flex-col transition-all cursor-pointer hover:border-green-200 overflow-hidden ${isExpanded ? 'border-green-300 ring-2 ring-green-50' : 'border-gray-100'}`}
                 >
@@ -233,16 +233,16 @@ export default function DownloadsLibrary() {
                         </div>
                       )}
                     </div>
-                    
+
                     <div className="flex flex-col py-1 w-full relative">
                       <h3 className="font-bold text-gray-900 text-sm mb-1 leading-tight pr-6">{item.title}</h3>
                       <p className="text-[10px] font-bold text-gray-500 mb-2 uppercase">{item.type}</p>
-                      
+
                       <p className="text-[10px] text-gray-400 mb-2">Order Date: {item.date}</p>
-                      
+
                       <div className="mt-auto flex justify-between items-end w-full pt-4">
                         <div className="w-full bg-green-500 text-white font-medium py-2 px-4 rounded-xl text-xs flex items-center justify-center border border-gray-100">
-                          Click card to view downloadable chapters
+                          Click Here
                         </div>
                       </div>
 
@@ -341,7 +341,7 @@ export default function DownloadsLibrary() {
             })
           )}
         </div>
-        
+
         {/* Help Note */}
         <div className="bg-blue-50 p-4 rounded-2xl flex items-start gap-3 mt-8">
           <CheckCircle2 className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
